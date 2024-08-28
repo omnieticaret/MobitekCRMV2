@@ -5,6 +5,16 @@ VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2", "MobitekCRMV2\MobitekCRMV2.csproj", "{0C9A26E3-54E9-46EA-9E09-2860E8DEEA49}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Entity", "MobitekCRMV2.Entity\MobitekCRMV2.Entity.csproj", "{95FA2E3C-EFCC-4AC7-B49B-CF60479EF6BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Model", "MobitekCRMV2.Model\MobitekCRMV2.Model.csproj", "{09C0959F-9845-4D9B-848E-30DED13015D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.DataAccess", "MobitekCRMV2.DataAccess\MobitekCRMV2.DataAccess.csproj", "{C547978F-33E5-40D1-A987-DE423A07B414}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Business", "MobitekCRMV2.Business\MobitekCRMV2.Business.csproj", "{1886761A-2B58-4916-8A00-252D097E7368}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Authentication", "MobitekCRMV2.Authentication\MobitekCRMV2.Authentication.csproj", "{0F7449B3-F6E6-410E-9C28-577A4D5A069F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +25,26 @@ Global
 		{0C9A26E3-54E9-46EA-9E09-2860E8DEEA49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C9A26E3-54E9-46EA-9E09-2860E8DEEA49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C9A26E3-54E9-46EA-9E09-2860E8DEEA49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95FA2E3C-EFCC-4AC7-B49B-CF60479EF6BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95FA2E3C-EFCC-4AC7-B49B-CF60479EF6BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95FA2E3C-EFCC-4AC7-B49B-CF60479EF6BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95FA2E3C-EFCC-4AC7-B49B-CF60479EF6BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09C0959F-9845-4D9B-848E-30DED13015D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09C0959F-9845-4D9B-848E-30DED13015D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09C0959F-9845-4D9B-848E-30DED13015D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09C0959F-9845-4D9B-848E-30DED13015D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C547978F-33E5-40D1-A987-DE423A07B414}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C547978F-33E5-40D1-A987-DE423A07B414}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C547978F-33E5-40D1-A987-DE423A07B414}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C547978F-33E5-40D1-A987-DE423A07B414}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1886761A-2B58-4916-8A00-252D097E7368}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1886761A-2B58-4916-8A00-252D097E7368}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1886761A-2B58-4916-8A00-252D097E7368}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1886761A-2B58-4916-8A00-252D097E7368}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F7449B3-F6E6-410E-9C28-577A4D5A069F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F7449B3-F6E6-410E-9C28-577A4D5A069F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F7449B3-F6E6-410E-9C28-577A4D5A069F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F7449B3-F6E6-410E-9C28-577A4D5A069F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
