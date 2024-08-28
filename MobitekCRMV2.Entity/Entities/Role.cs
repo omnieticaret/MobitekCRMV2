@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNet.Identity.EntityFramework;
+﻿using Microsoft.AspNetCore.Identity;
 using MobitekCRMV2.Entity.Enums;
 
 namespace MobitekCRMV2.Entity.Entities

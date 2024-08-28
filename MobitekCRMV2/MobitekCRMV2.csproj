@@ -24,4 +24,12 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MobitekCRMV2.Authentication\MobitekCRMV2.Authentication.csproj" />
+    <ProjectReference Include="..\MobitekCRMV2.Business\MobitekCRMV2.Business.csproj" />
+    <ProjectReference Include="..\MobitekCRMV2.DataAccess\MobitekCRMV2.DataAccess.csproj" />
+    <ProjectReference Include="..\MobitekCRMV2.Entity\MobitekCRMV2.Entity.csproj" />
+    <ProjectReference Include="..\MobitekCRMV2.Model\MobitekCRMV2.Model.csproj" />
+  </ItemGroup>
+
 </Project>
