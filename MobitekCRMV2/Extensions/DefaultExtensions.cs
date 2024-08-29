@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using MobitekCRMV2.DataAccess.Context;
 using MobitekCRMV2.Entity.Entities;
 
-namespace MobitekCRMV2
+namespace MobitekCRMV2.Extensions
 {
-    public static class Extensions
+    public static class DefaultExtensions
     {
         /// <summary>
         /// Mssql Veritabanı bağlantısı için gerekli ayarlar.
@@ -53,7 +53,7 @@ namespace MobitekCRMV2
                 opts.LogoutPath = new PathString("/Member/LogOut");
                 opts.Cookie = cookieBuilder;
                 opts.SlidingExpiration = true;
-                opts.ExpireTimeSpan = System.TimeSpan.FromDays(60);
+                opts.ExpireTimeSpan = TimeSpan.FromDays(60);
                 opts.AccessDeniedPath = new PathString("/Users/AccessDenied");
             });
 

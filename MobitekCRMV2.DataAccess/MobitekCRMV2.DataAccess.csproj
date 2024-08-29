@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MobitekCRMV2.Entity\MobitekCRMV2.Entity.csproj" />
+    <ProjectReference Include="..\MobitekCRMV2.Model\MobitekCRMV2.Model.csproj" />
   </ItemGroup>
 
 </Project>

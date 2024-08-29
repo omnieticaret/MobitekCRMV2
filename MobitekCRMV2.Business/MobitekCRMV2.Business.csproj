@@ -6,4 +6,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.102.3" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MobitekCRMV2.DataAccess\MobitekCRMV2.DataAccess.csproj" />
+    <ProjectReference Include="..\MobitekCRMV2.Model\MobitekCRMV2.Model.csproj" />
+  </ItemGroup>
+
 </Project>
