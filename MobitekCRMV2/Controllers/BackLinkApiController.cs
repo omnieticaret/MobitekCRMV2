@@ -38,66 +38,125 @@ namespace MobitekCRMV2.Controllers
         [HttpGet("Index")]
         public async Task<IActionResult> Index(string id, string type)
         {
-            var backlinkViewModelList = new List<BackLinkViewModel>();
-            var Domain = await _domainRepository.Table.AsNoTracking().Include(x => x.Project).FirstOrDefaultAsync(x => x.Id == id);
-            if (type == null)
+            if (string.IsNullOrEmpty(id))
             {
-                if (id == null)
-                {
-                    return RedirectToAction("Index", "Domain");
-                }
-                var backlinkList = await _backLinkRepository.Table.AsNoTracking().Where(x => x.DomainId == id).ToListAsync();
+                return BadRequest(new { message = "Id cannot be null or empty" });
+            }
+
+            var backlinkViewModelList = new List<BackLinkViewModel>();
+
+            var domain = await _domainRepository.Table.AsNoTracking()
+                .Include(x => x.Project)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (domain == null)
+            {
+                return NotFound(new { message = "Domain not found" });
+            }
+
+            if (string.IsNullOrEmpty(type))
+            {
+                var backlinkList = await _backLinkRepository.Table.AsNoTracking()
+                    .Where(x => x.DomainId == id)
+                    .ToListAsync();
 
                 foreach (var item in backlinkList)
                 {
-                    var baclink = new BackLinkViewModel();
-                    baclink.Id = item.Id;
-                    baclink.Status = item.Status;
-                    baclink.UrlFrom = item.UrlFrom;
-                    baclink.LandingPage = item.LandingPage;
-                    baclink.Anchor = item.Anchor;
-                    baclink.Da = item.Da;
-                    baclink.Pa = item.Pa;
-                    baclink.SelectedDate = item.SelectDate;
-                    backlinkViewModelList.Add(baclink);
+                    backlinkViewModelList.Add(new BackLinkViewModel
+                    {
+                        Id = item.Id,
+                        Status = item.Status,
+                        UrlFrom = item.UrlFrom,
+                        LandingPage = item.LandingPage,
+                        Anchor = item.Anchor,
+                        Da = item.Da,
+                        Pa = item.Pa,
+                        SelectedDate = item.SelectDate
+                    });
                 }
             }
-
-            if (type != null)
+            else
             {
-                var error = await _backLinkRepository.Table.AsNoTracking().Where(x => x.DomainId == id && x.Status != "OK").ToListAsync();
+                var errorList = await _backLinkRepository.Table.AsNoTracking()
+                    .Where(x => x.DomainId == id && x.Status != "OK")
+                    .ToListAsync();
 
-                foreach (var item in error)
+                foreach (var item in errorList)
                 {
-                    var baclink = new BackLinkViewModel();
-                    baclink.Id = item.Id;
-                    baclink.Status = item.Status;
-                    baclink.UrlFrom = item.UrlFrom;
-                    baclink.LandingPage = item.LandingPage;
-                    baclink.Anchor = item.Anchor;
-                    baclink.SelectedDate = item.SelectDate;
-                    backlinkViewModelList.Add(baclink);
+                    backlinkViewModelList.Add(new BackLinkViewModel
+                    {
+                        Id = item.Id,
+                        Status = item.Status,
+                        UrlFrom = item.UrlFrom,
+                        LandingPage = item.LandingPage,
+                        Anchor = item.Anchor,
+                        SelectedDate = item.SelectDate
+                    });
                 }
-
             }
-
-            TempData["DomainName"] = Domain.Name;
-            TempData["ProjectId"] = Domain.Project.Id;
 
             foreach (var backlink in backlinkViewModelList)
             {
-                if (backlink.SelectedDate != null)
+                if (!string.IsNullOrEmpty(backlink.SelectedDate) && backlink.SelectedDate.Contains("."))
                 {
-                    if (backlink.SelectedDate.Contains("."))
-                    {
-                        backlink.SelectedDate = _backlinksService.FixSelectDate(backlink.SelectedDate);
-                    }
+                    backlink.SelectedDate = _backlinksService.FixSelectDate(backlink.SelectedDate);
                 }
-
-
             }
 
-            return View(backlinkViewModelList);
+            return Ok(new
+            {
+                DomainName = domain.Name,
+                ProjectId = domain.Project.Id,
+                Backlinks = backlinkViewModelList
+            });
+        }
+
+        [HttpPost("Index")]
+        public async Task<IActionResult> Index([FromBody] BacklinkRequestDTO request)
+        {
+            var backlinkViewModelList = new List<BackLinkViewModel>();
+            var date = request.SelectedDate2;
+            var year = date.ToString().Split(".")[2];
+            year = year.Split(" ")[0];
+            var month = date.ToString().Split(".")[1];
+            var datetimes = month + "-" + year;
+
+            List<BackLink> backlinks = new List<BackLink>();
+            if (date.ToString() == "1.01.0001 00:00:00")
+            {
+                backlinks = await _backLinkRepository.Table.AsNoTracking()
+                            .Where(x => x.Domain.Name == request.DomainName)
+                            .ToListAsync();
+            }
+            else
+            {
+                backlinks = await _backLinkRepository.Table.AsNoTracking()
+                            .Where(x => x.Domain.Name == request.DomainName &&
+                                   (x.SelectDate == datetimes || x.SelectDate == date.ToString()))
+                            .ToListAsync();
+            }
+
+            foreach (var item in backlinks)
+            {
+                var backlink = new BackLinkViewModel
+                {
+                    Id = item.Id,
+                    Status = item.Status,
+                    UrlFrom = item.UrlFrom,
+                    LandingPage = item.LandingPage,
+                    Anchor = item.Anchor,
+                    Da = item.Da,
+                    Pa = item.Pa
+                };
+                backlinkViewModelList.Add(backlink);
+            }
+
+            return new JsonResult(backlinkViewModelList);
+        }
+        public class BacklinkRequestDTO
+        {
+            public DateTime SelectedDate2 { get; set; }
+            public string DomainName { get; set; }
         }
     }
 }
