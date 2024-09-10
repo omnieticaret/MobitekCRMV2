@@ -129,7 +129,7 @@ namespace MobitekCRMV2.Controllers
                 Status = status,
                 Page = page,
                 TotalBudget = totalBudget,
-                TotalContractKeyword = int.Parse(totalContractKeyword)
+                //TotalContractKeyword = int.Parse(totalContractKeyword)
         };
             return Ok(viewModel);
         }

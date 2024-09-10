@@ -15,6 +15,7 @@
             services.AddScoped<TodosService>();
             services.AddScoped<KeywordsService>();
             services.AddScoped<ContentBudgetService>();
+            services.AddScoped<PasswordService>();
 
             return services;
         }
