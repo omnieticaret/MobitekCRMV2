@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MobitekCRMV2.Authentication;
 using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
@@ -21,14 +22,14 @@ namespace MobitekCRMV2.Controllers
         private UserManager<User> _userManager;
         private SignInManager<User> _signInManager;
 
-
+        private readonly IAuthService _authService;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IRepository<Project> _projectRepository;
         private readonly IRepository<UserInfo> _userInfoRepository;
         private readonly IRepository<NewsSite> _newsSiteRepository;
         private readonly IRepository<Customer> _customerRepository;
         private readonly PasswordService _passwordService;
-        public UsersApiController(IRepository<Project> projectRepository, UserManager<User> userManager, SignInManager<User> signInManager, IRepository<User> userRepository, IUnitOfWork unitOfWork, IRepository<UserInfo> userInfoRepository, IRepository<NewsSite> newsSiteRepository, IRepository<Customer> customerRepository, PasswordService passwordService = null)
+        public UsersApiController(IRepository<Project> projectRepository, UserManager<User> userManager, SignInManager<User> signInManager, IRepository<User> userRepository, IUnitOfWork unitOfWork, IRepository<UserInfo> userInfoRepository, IRepository<NewsSite> newsSiteRepository, IRepository<Customer> customerRepository, PasswordService passwordService = null, IAuthService authService = null)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -40,6 +41,7 @@ namespace MobitekCRMV2.Controllers
             _newsSiteRepository = newsSiteRepository;
             _customerRepository = customerRepository;
             _passwordService = passwordService;
+            _authService = authService;
         }
         [HttpGet("index")]
         public async Task<IActionResult> Index([FromQuery] UserType userType, [FromQuery] bool isAll, [FromQuery] string errorMessage, [FromQuery] string status)
@@ -136,8 +138,18 @@ namespace MobitekCRMV2.Controllers
 
             if (result.Succeeded)
             {
-                // Eğer token üretiyorsanız burada JWT token üretebilirsiniz
-                return Ok(new { Message = "Login başarılı", Roles = await _userManager.GetRolesAsync(user) });
+                // Kullanıcı rollerini alalım
+                var roles = await _userManager.GetRolesAsync(user);
+
+                // JWT Token üretelim
+                var token = _authService.GenerateJwtToken(user, roles);
+
+                return Ok(new
+                {
+                    Message = "Login başarılı",
+                    Token = token,
+                    Roles = roles
+                });
             }
 
             return Unauthorized(new { ErrorMessage = "Email veya parola yanlış" });

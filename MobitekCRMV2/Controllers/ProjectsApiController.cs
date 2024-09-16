@@ -3,20 +3,23 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MobitekCRMV2.Authentication;
 using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Context;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
+using MobitekCRMV2.Dto.Dtos;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Jobs;
+using Newtonsoft.Json;
+using System.Security.Claims;
 
 namespace MobitekCRMV2.Controllers
 {
     [Route("api/projects")]
     [ApiController]
-    [AllowAnonymous]
-
+  
     public class ProjectsApiController : ControllerBase
     {
         #region Dependecy injection
@@ -35,12 +38,14 @@ namespace MobitekCRMV2.Controllers
         private readonly CRMDbContext _context;
         private readonly ProjectsService _projectsService;
         private readonly BacklinksService _backlinksService;
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
 
-        
+
         public ProjectsApiController(IRepository<Project> projectRepository, IRepository<Keyword> keywordRepository,
             IRepository<Platform> platformRepository, IUnitOfWork unitOfWork, UserManager<User> userManager, IRepository<Customer> customerRepository,
             IRepository<BackLink> backlinkrepository, IRepository<KeywordInfo> keywordInfoRepository, IRepository<KeywordValue> keywordvalue,
-            SpaceSerpJob spaceSerpJob, CreateTodos createTodos, CRMDbContext context, ProjectsService projectsService, BacklinksService backlinksService)
+            SpaceSerpJob spaceSerpJob, CreateTodos createTodos, CRMDbContext context, ProjectsService projectsService, BacklinksService backlinksService, HttpClient httpClient = null, IConfiguration configuration = null)
         {
             _projectRepository = projectRepository;
             _keywordRepository = keywordRepository;
@@ -56,26 +61,46 @@ namespace MobitekCRMV2.Controllers
             _context = context;
             _projectsService = projectsService;
             _backlinksService = backlinksService;
+            _httpClient = httpClient;
+            _configuration = configuration;
         }
         #endregion
         [HttpGet("index")]
+       
         public async Task<IActionResult> Index(ProjectType projectType, Status status, bool isAll)
         {
-            //var userName = User.Identity.Name;
-            var userName = "adminMain";
+            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            {
+                return Unauthorized("Token eksik veya hatalı.");
+            }
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+
+
+            var tokenHelper = new TokenHelper();
+         
+            var claimsPrincipal = tokenHelper.ValidateToken(token, _configuration["Jwt:Key"] ); 
+            if (claimsPrincipal == null) return Unauthorized();
+
+            var userName = claimsPrincipal.FindFirst(ClaimTypes.Name)?.Value;
+            var userRole = claimsPrincipal.FindFirst(ClaimTypes.Role)?.Value;
+
+            // Kullanıcıyı database'den al
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == userName);
+
             IQueryable<Project> query = _projectRepository.Table.AsNoTracking()
                 .Include(x => x.Expert)
                 .Include(x => x.Keywords)
                 .Include(x => x.Customer).ThenInclude(x => x.CustomerRepresentative);
 
-            if (!(User.IsInRole("admin") || User.IsInRole("viewer")))
+            // Roller bazında sorgu filtreleme
+            if (!(userRole == "admin" || userRole == "viewer"))
             {
-                if (User.IsInRole("customer"))
+                if (userRole == "customer")
                 {
                     query = query.Where(x => x.Customer.CustomerRepresentativeId == user.Id);
                 }
-                else if (User.IsInRole("sm_expert"))
+                else if (userRole == "sm_expert")
                 {
                     query = query.Where(x => x.ProjectType == projectType);
                 }
@@ -84,10 +109,7 @@ namespace MobitekCRMV2.Controllers
                     query = query.Where(x => x.Expert.UserName == userName);
                 }
             }
-
             List<Project> projects;
-            string page = "";
-
             if (isAll)
             {
                 projects = await query.ToListAsync();
@@ -95,52 +117,36 @@ namespace MobitekCRMV2.Controllers
             else if (status == Status.Passive)
             {
                 projects = await query.Where(p => p.Status == Status.Passive).ToListAsync();
-                page = "Passive";
             }
             else if (status == Status.Frozen)
             {
                 projects = await query.Where(p => p.Status == Status.Frozen).ToListAsync();
-                page = "Frozen";
             }
             else
             {
-                if (User.IsInRole("sm_expert"))
-                {
-                    projects = await query
-                        .Where(p => p.Status == status && p.ProjectType == ProjectType.Sm).ToListAsync();
-                }
-                else
-                {
-                    projects = await query
-                        .Where(p => p.Status == status && p.ProjectType == projectType)
-                        .ToListAsync();
-                }
-
-                page = "ProjectType";
+                projects = await query
+                    .Where(p => p.Status == status && p.ProjectType == projectType)
+                    .ToListAsync();
             }
 
-            var totalBudget = _projectsService.GetTotalBudgetFromList(projects);
-            var totalContractKeyword = _projectsService.GetTotalContractKeywordCount(projects);
-
-            var viewModel = new ProjectsViewModel()
+            List<ProjectListDto> viewModel = new List<ProjectListDto>();
+            foreach (var project in projects)
             {
-                Projects = projects,
-                ProjectType = projectType,
-                Status = status,
-                Page = page,
-                TotalBudget = totalBudget,
-                //TotalContractKeyword = int.Parse(totalContractKeyword)
-        };
-            return Ok(viewModel);
+                var projectDto = new ProjectListDto
+                {
+                    Url = project.Url,
+                    Budget = project.Budget,
+                    StartDate = project.StartDate,
+                    ReportDate = project.ReportDate,
+                    Quantity = _projectsService.CalculateDate(project)
+                };
+                viewModel.Add(projectDto);
+            }
+
+            return Content(JsonConvert.SerializeObject(viewModel), "application/json");
         }
-        public class ProjectsViewModel
-        {
-            public List<Project> Projects { get; set; }
-            public ProjectType ProjectType { get; set; }
-            public Status Status { get; set; }
-            public string Page { get; set; }
-            public decimal TotalBudget { get; set; }
-            public int TotalContractKeyword { get; set; }
-        }
+
+
     }
+
 }

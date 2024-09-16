@@ -3,17 +3,19 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2", "MobitekCRMV2\MobitekCRMV2.csproj", "{0C9A26E3-54E9-46EA-9E09-2860E8DEEA49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobitekCRMV2", "MobitekCRMV2\MobitekCRMV2.csproj", "{0C9A26E3-54E9-46EA-9E09-2860E8DEEA49}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Entity", "MobitekCRMV2.Entity\MobitekCRMV2.Entity.csproj", "{95FA2E3C-EFCC-4AC7-B49B-CF60479EF6BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobitekCRMV2.Entity", "MobitekCRMV2.Entity\MobitekCRMV2.Entity.csproj", "{95FA2E3C-EFCC-4AC7-B49B-CF60479EF6BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Model", "MobitekCRMV2.Model\MobitekCRMV2.Model.csproj", "{09C0959F-9845-4D9B-848E-30DED13015D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobitekCRMV2.Model", "MobitekCRMV2.Model\MobitekCRMV2.Model.csproj", "{09C0959F-9845-4D9B-848E-30DED13015D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.DataAccess", "MobitekCRMV2.DataAccess\MobitekCRMV2.DataAccess.csproj", "{C547978F-33E5-40D1-A987-DE423A07B414}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobitekCRMV2.DataAccess", "MobitekCRMV2.DataAccess\MobitekCRMV2.DataAccess.csproj", "{C547978F-33E5-40D1-A987-DE423A07B414}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Business", "MobitekCRMV2.Business\MobitekCRMV2.Business.csproj", "{1886761A-2B58-4916-8A00-252D097E7368}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobitekCRMV2.Business", "MobitekCRMV2.Business\MobitekCRMV2.Business.csproj", "{1886761A-2B58-4916-8A00-252D097E7368}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Authentication", "MobitekCRMV2.Authentication\MobitekCRMV2.Authentication.csproj", "{0F7449B3-F6E6-410E-9C28-577A4D5A069F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MobitekCRMV2.Authentication", "MobitekCRMV2.Authentication\MobitekCRMV2.Authentication.csproj", "{0F7449B3-F6E6-410E-9C28-577A4D5A069F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobitekCRMV2.Dto", "MobitekCRMV2.Dto\MobitekCRMV2.Dto.csproj", "{EA88110F-67F7-4BB4-9B63-B3D8E3BCD3EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{0F7449B3-F6E6-410E-9C28-577A4D5A069F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F7449B3-F6E6-410E-9C28-577A4D5A069F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F7449B3-F6E6-410E-9C28-577A4D5A069F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA88110F-67F7-4BB4-9B63-B3D8E3BCD3EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA88110F-67F7-4BB4-9B63-B3D8E3BCD3EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA88110F-67F7-4BB4-9B63-B3D8E3BCD3EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA88110F-67F7-4BB4-9B63-B3D8E3BCD3EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

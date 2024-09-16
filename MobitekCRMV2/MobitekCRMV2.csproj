@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
       <PrivateAssets>all</PrivateAssets>
@@ -26,6 +27,7 @@
     <ProjectReference Include="..\MobitekCRMV2.Authentication\MobitekCRMV2.Authentication.csproj" />
     <ProjectReference Include="..\MobitekCRMV2.Business\MobitekCRMV2.Business.csproj" />
     <ProjectReference Include="..\MobitekCRMV2.DataAccess\MobitekCRMV2.DataAccess.csproj" />
+    <ProjectReference Include="..\MobitekCRMV2.Dto\MobitekCRMV2.Dto.csproj" />
     <ProjectReference Include="..\MobitekCRMV2.Entity\MobitekCRMV2.Entity.csproj" />
     <ProjectReference Include="..\MobitekCRMV2.Model\MobitekCRMV2.Model.csproj" />
   </ItemGroup>

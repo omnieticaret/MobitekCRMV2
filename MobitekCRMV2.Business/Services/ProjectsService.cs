@@ -36,6 +36,27 @@ namespace MobitekCRMV2.Business.Services
             });
             return totalBudget;
         }
+        public string CalculateDate(Project project)
+        {
+            string myString = "";
+            var duration = DateTime.Now - project.StartDate;
+            var totalDays = duration.TotalDays;
+            var totalMonths = (totalDays / 30) + 1;
+            var totalYears = totalMonths / 12;
+            var months = (int)(totalMonths % 12);
+
+            var years = (int)(totalYears);
+
+            if (years > 0)
+            {
+                myString = myString + years + " yıl ";
+            }
+            if (months > 0)
+            {
+                myString = myString + months + " ay ";
+            }
+            return myString;
+        }
 
         public string GetTotalContractKeywordCount(List<Project> projectList)
         {
