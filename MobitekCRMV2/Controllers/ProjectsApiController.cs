@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MobitekCRMV2.Authentication;
@@ -38,12 +39,13 @@ namespace MobitekCRMV2.Controllers
         private readonly BacklinksService _backlinksService;
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly TokenHelper _tokenHelper;
 
 
         public ProjectsApiController(IRepository<Project> projectRepository, IRepository<Keyword> keywordRepository,
             IRepository<Platform> platformRepository, IUnitOfWork unitOfWork, UserManager<User> userManager, IRepository<Customer> customerRepository,
             IRepository<BackLink> backlinkrepository, IRepository<KeywordInfo> keywordInfoRepository, IRepository<KeywordValue> keywordvalue,
-            SpaceSerpJob spaceSerpJob, CreateTodos createTodos, CRMDbContext context, ProjectsService projectsService, BacklinksService backlinksService, HttpClient httpClient = null, IConfiguration configuration = null)
+            SpaceSerpJob spaceSerpJob, CreateTodos createTodos, CRMDbContext context, ProjectsService projectsService, BacklinksService backlinksService, HttpClient httpClient = null, IConfiguration configuration = null, TokenHelper tokenHelper = null)
         {
             _projectRepository = projectRepository;
             _keywordRepository = keywordRepository;
@@ -61,24 +63,20 @@ namespace MobitekCRMV2.Controllers
             _backlinksService = backlinksService;
             _httpClient = httpClient;
             _configuration = configuration;
+            _tokenHelper = tokenHelper;
         }
         #endregion
         [HttpGet("index")]
-
+        [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> Index(ProjectType projectType, Status status, bool isAll)
         {
             var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            var claimsPrincipal = _tokenHelper.ValidateToken(_configuration["Jwt:Key"], authHeader);
+
+            if (claimsPrincipal == null)
             {
-                return Unauthorized("Token eksik veya hatalı.");
+                return Unauthorized();
             }
-            var token = authHeader.Substring("Bearer ".Length).Trim();
-
-
-            var tokenHelper = new TokenHelper();
-
-            var claimsPrincipal = tokenHelper.ValidateToken(token, _configuration["Jwt:Key"]);
-            if (claimsPrincipal == null) return Unauthorized();
 
             var userName = claimsPrincipal.FindFirst(ClaimTypes.Name)?.Value;
             var userRole = claimsPrincipal.FindFirst(ClaimTypes.Role)?.Value;

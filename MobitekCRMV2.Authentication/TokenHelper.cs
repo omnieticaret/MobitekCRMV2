@@ -1,18 +1,23 @@
-﻿using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MobitekCRMV2.Authentication
 {
+
     public class TokenHelper
     {
-        public ClaimsPrincipal ValidateToken(string token, string secretKey)
+        private readonly IConfiguration _configuration;
+
+        public TokenHelper(IConfiguration configuration)
         {
+            _configuration = configuration;
+        }
+
+        public ClaimsPrincipal ValidateToken(string secretKey, string authHeader)
+        {
+            var token = authHeader.Substring("Bearer ".Length).Trim();
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = System.Text.Encoding.ASCII.GetBytes(secretKey);
 

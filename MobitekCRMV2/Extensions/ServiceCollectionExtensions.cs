@@ -1,6 +1,7 @@
 ﻿namespace MobitekCRMV2.Extensions
 {
     using Microsoft.Extensions.DependencyInjection;
+    using MobitekCRMV2.Authentication;
     using MobitekCRMV2.Business.Services;
 
     public static class ServiceCollectionExtensions
@@ -16,6 +17,7 @@
             services.AddScoped<KeywordsService>();
             services.AddScoped<ContentBudgetService>();
             services.AddScoped<PasswordService>();
+            services.AddScoped<TokenHelper>();
 
             return services;
         }
