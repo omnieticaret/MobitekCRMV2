@@ -72,6 +72,11 @@ namespace MobitekCRMV2.Business.Services
             return count.ToString() + "/" + contractCount.ToString();
         }
 
+        public string GetContractKeywordCount(Project project)
+        {
+            return project.Keywords.Count().ToString() + "/" + project.ContractKeywordCount.ToString();
+        }
+
         public async Task<Task> GetTargetUrlAsync(string KeywordId, Keyword keyword)
         {
             if (KeywordId != null)

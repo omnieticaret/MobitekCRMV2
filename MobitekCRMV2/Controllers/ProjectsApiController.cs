@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MobitekCRMV2.Authentication;
@@ -19,7 +17,7 @@ namespace MobitekCRMV2.Controllers
 {
     [Route("api/projects")]
     [ApiController]
-  
+
     public class ProjectsApiController : ControllerBase
     {
         #region Dependecy injection
@@ -66,7 +64,7 @@ namespace MobitekCRMV2.Controllers
         }
         #endregion
         [HttpGet("index")]
-       
+
         public async Task<IActionResult> Index(ProjectType projectType, Status status, bool isAll)
         {
             var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
@@ -78,8 +76,8 @@ namespace MobitekCRMV2.Controllers
 
 
             var tokenHelper = new TokenHelper();
-         
-            var claimsPrincipal = tokenHelper.ValidateToken(token, _configuration["Jwt:Key"] ); 
+
+            var claimsPrincipal = tokenHelper.ValidateToken(token, _configuration["Jwt:Key"]);
             if (claimsPrincipal == null) return Unauthorized();
 
             var userName = claimsPrincipal.FindFirst(ClaimTypes.Name)?.Value;
@@ -99,10 +97,6 @@ namespace MobitekCRMV2.Controllers
                 if (userRole == "customer")
                 {
                     query = query.Where(x => x.Customer.CustomerRepresentativeId == user.Id);
-                }
-                else if (userRole == "sm_expert")
-                {
-                    query = query.Where(x => x.ProjectType == projectType);
                 }
                 else
                 {
@@ -134,11 +128,17 @@ namespace MobitekCRMV2.Controllers
             {
                 var projectDto = new ProjectListDto
                 {
+                    Id = project.Id,
+                    ProjectType = project.ProjectType.ToString(),
+                    ExpertName = project.Expert?.UserName,
+                    ExpertId = project.ExpertId,
+                    Contracts = _projectsService.GetContractKeywordCount(project),
                     Url = project.Url,
                     Budget = project.Budget,
                     StartDate = project.StartDate,
                     ReportDate = project.ReportDate,
-                    Quantity = _projectsService.CalculateDate(project)
+                    StatusUpdateDate = project.StatusUpdateDate,
+                    ElapsedTime = _projectsService.CalculateDate(project)
                 };
                 viewModel.Add(projectDto);
             }
