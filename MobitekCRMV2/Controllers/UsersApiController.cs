@@ -7,13 +7,15 @@ using MobitekCRMV2.Authentication;
 using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
+using MobitekCRMV2.Dto.Dtos;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Model.Models;
 
 namespace MobitekCRMV2.Controllers
 {
-    [Authorize(Roles = MBCRMRoles.Admin_RoleString + ",viewer")]
+  //  [Authorize]
+ // [Authorize(Roles = MBCRMRoles.Admin_RoleString + ",viewer")]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersApiController : ControllerBase
@@ -46,51 +48,70 @@ namespace MobitekCRMV2.Controllers
         [HttpGet("index")]
         public async Task<IActionResult> Index([FromQuery] UserType userType, [FromQuery] bool isAll, [FromQuery] string errorMessage, [FromQuery] string status)
         {
-            var allUsers = _userManager.Users;
+            var allUsers = _userManager.Users.Select(user => new UserDto
+            {
+                Id = user.Id,
+                Name = user.UserName,
+                UserType = user.UserType,
+                Status = user.Status.ToString(),
+                ExpertProjects = user.ExpertProjects.Select(project => new ProjectDto
+                {
+                    ProjectId = project.Id,
+                    ProjectName = project.Name,
+                    Budget = !string.IsNullOrEmpty(project.Budget) ? Convert.ToInt32(project.Budget.Replace(".", "")) : (int?)null
+                }).ToList()
+            }).ToList();
+
             var usersWithTypes = _userRepository.Table.AsNoTracking()
                 .Include(x => x.ExpertProjects.Where(y => y.Status == Status.Active))
                 .Where(user => user.UserType == userType && user.Status == Status.Active)
+                .Select(user => new UserDto
+                {
+                    Id = user.Id,
+                    Name = user.UserName,
+                    UserType = user.UserType,
+                    Status = user.Status.ToString(),
+                    ExpertProjects = user.ExpertProjects.Select(project => new ProjectDto
+                    {
+                        ProjectId = project.Id,
+                        ProjectName = project.Name,
+                        Budget = !string.IsNullOrEmpty(project.Budget) ? Convert.ToInt32(project.Budget.Replace(".", "")) : (int?)null
+                    }).ToList()
+                })
                 .ToList();
 
-            var totalBudget = 0;
-
-            foreach (var user in usersWithTypes)
-            {
-                foreach (var project in user.ExpertProjects)
-                {
-                    try
-                    {
-                        if (project.Budget != null)
-                        {
-                            if (project.Budget.Contains("."))
-                                project.Budget = project.Budget.Replace(".", "");
-                            totalBudget += Convert.ToInt32(project.Budget);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Loglama yapılabilir veya hata mesajı döndürülebilir
-                        totalBudget += 0;
-                    }
-                }
-            }
+            var totalBudget = usersWithTypes.Sum(user => user.ExpertProjects.Sum(project => project.Budget ?? 0));
 
             if (status == "Passive")
             {
                 var passiveUsers = _userRepository.Table.AsNoTracking()
                     .Where(user => user.Status == Status.Passive)
+                    .Select(user => new UserDto
+                    {
+                        Id = user.Id,
+                        Name = user.UserName,
+                        UserType = user.UserType,
+                        Status = user.Status.ToString(),
+                        ExpertProjects = user.ExpertProjects.Select(project => new ProjectDto
+                        {
+                            ProjectId = project.Id,
+                            ProjectName = project.Name,
+                            Budget = !string.IsNullOrEmpty(project.Budget) ? Convert.ToInt32(project.Budget.Replace(".", "")) : (int?)null
+                        }).ToList()
+                    })
                     .ToList();
 
-                return Ok(new
+                return Ok(new IndexResponseDto
                 {
                     Users = passiveUsers,
-                    ErrorMessage = errorMessage
+                    ErrorMessage = errorMessage,
+                    TotalBudget = 0 
                 });
             }
 
             if (!isAll)
             {
-                return Ok(new
+                return Ok(new IndexResponseDto
                 {
                     Users = usersWithTypes,
                     UserType = userType,
@@ -99,13 +120,14 @@ namespace MobitekCRMV2.Controllers
                 });
             }
 
-            return Ok(new
+            return Ok(new IndexResponseDto
             {
                 Users = allUsers,
                 ErrorMessage = errorMessage,
                 TotalBudget = totalBudget
             });
         }
+
 
         [HttpGet("login")]
         public IActionResult Login()

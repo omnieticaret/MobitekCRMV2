@@ -6,4 +6,8 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MobitekCRMV2.Entity\MobitekCRMV2.Entity.csproj" />
+  </ItemGroup>
+
 </Project>
