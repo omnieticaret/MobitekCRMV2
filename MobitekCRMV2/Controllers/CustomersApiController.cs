@@ -83,6 +83,9 @@ namespace MobitekCRMV2.Controllers
                     CompanyName = customer.CompanyName,
                     CompanyOfficialWebsite = customer.CompanyOfficialWebsite,
                     CustomerType = customer.CustomerType.ToString(),
+                    CustomerRepresentative = (customer.CustomerRepresentative != null && !string.IsNullOrEmpty(customer.CustomerRepresentative.UserName))
+            ? customer.CustomerRepresentative.UserName
+            : "Yetkili yok",
                     CompanyPhone = customer.CompanyPhone,
                     CompanyEmail = customer.CompanyEmail
                 };

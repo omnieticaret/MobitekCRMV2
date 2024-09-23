@@ -8,6 +8,8 @@ namespace MobitekCRMV2.Dto.Dtos
         public string CompanyName { get; set; }
         public string CustomerType { get; set; }
 
+        public string CustomerRepresentative { get; set; }
+
         public string CompanyPhone { get; set; }
 
         public string CompanyEmail { get; set; }
