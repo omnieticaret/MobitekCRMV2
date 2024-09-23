@@ -17,7 +17,7 @@ namespace MobitekCRMV2.Controllers
 {
     //  [Authorize]
     // [Authorize(Roles = MBCRMRoles.Admin_RoleString + ",viewer")]
-    [Route("api/[controller]")]
+    [Route("api/users")]
     [ApiController]
     public class UsersApiController : ControllerBase
     {

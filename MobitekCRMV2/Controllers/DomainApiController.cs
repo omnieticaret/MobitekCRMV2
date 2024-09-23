@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace MobitekCRMV2.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/domain")]
     [ApiController]
     public class DomainApiController : ControllerBase
     {
@@ -41,9 +41,10 @@ namespace MobitekCRMV2.Controllers
             _tokenHelper = tokenHelper;
             _configuration = configuration;
         }
-        [Authorize(AuthenticationSchemes = "Bearer")]
+      
         [HttpGet("index")]
-        public async Task<ActionResult<List<DomainDto>>> Index([FromQuery] string projectStatus)
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        public async Task<ActionResult<List<DomainDto>>> Index([FromQuery] string projectStatus = null)
         {
             var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
             var claimsPrincipal = _tokenHelper.ValidateToken(_configuration["Jwt:Key"], authHeader);
