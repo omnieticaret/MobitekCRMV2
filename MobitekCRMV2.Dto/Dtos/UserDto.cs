@@ -10,25 +10,20 @@ namespace MobitekCRMV2.Dto.Dtos
     public class UserDto
     {
         public string Id { get; set; }
-        public string Name { get; set; }
-        public UserType UserType { get; set; }
-        public string Status { get; set; }
-        public List<ProjectDto> ExpertProjects { get; set; }
+        public string UserName { get; set; }
+        public string Email { get; set; }
+        public string PhoneNumber { get; set; }
+        public int ProjectCount { get; set; }
+        public int KeywordCount { get; set; }
+        public decimal Budget { get; set; }
     }
 
-    public class ProjectDto
-    {
-        public string ProjectId { get; set; }
-        public string ProjectName { get; set; }
-        public int? Budget { get; set; } 
-    }
-
-    public class IndexResponseDto
+    public class UsersResponseDto
     {
         public List<UserDto> Users { get; set; }
+        public UserType UserType { get; set; }
         public string ErrorMessage { get; set; }
-        public UserType UserType { get; set; } 
-        public int TotalBudget { get; set; }
+        public decimal TotalBudget { get; set; }
     }
 
 }

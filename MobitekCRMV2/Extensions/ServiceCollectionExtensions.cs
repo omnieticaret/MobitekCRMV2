@@ -18,6 +18,7 @@
             services.AddScoped<ContentBudgetService>();
             services.AddScoped<PasswordService>();
             services.AddScoped<TokenHelper>();
+            services.AddScoped<DomainService>();
 
             return services;
         }

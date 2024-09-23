@@ -81,7 +81,6 @@ namespace MobitekCRMV2.Controllers
             var userName = claimsPrincipal.FindFirst(ClaimTypes.Name)?.Value;
             var userRole = claimsPrincipal.FindFirst(ClaimTypes.Role)?.Value;
 
-            // Kullanıcıyı database'den al
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == userName);
 
             IQueryable<Project> query = _projectRepository.Table.AsNoTracking()

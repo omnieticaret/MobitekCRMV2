@@ -11,11 +11,12 @@ using MobitekCRMV2.Dto.Dtos;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Model.Models;
+using System.Security.Claims;
 
 namespace MobitekCRMV2.Controllers
 {
-  //  [Authorize]
- // [Authorize(Roles = MBCRMRoles.Admin_RoleString + ",viewer")]
+    //  [Authorize]
+    // [Authorize(Roles = MBCRMRoles.Admin_RoleString + ",viewer")]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersApiController : ControllerBase
@@ -31,7 +32,10 @@ namespace MobitekCRMV2.Controllers
         private readonly IRepository<NewsSite> _newsSiteRepository;
         private readonly IRepository<Customer> _customerRepository;
         private readonly PasswordService _passwordService;
-        public UsersApiController(IRepository<Project> projectRepository, UserManager<User> userManager, SignInManager<User> signInManager, IRepository<User> userRepository, IUnitOfWork unitOfWork, IRepository<UserInfo> userInfoRepository, IRepository<NewsSite> newsSiteRepository, IRepository<Customer> customerRepository, PasswordService passwordService = null, IAuthService authService = null)
+        private readonly TokenHelper _tokenHelper;
+        private readonly IConfiguration _configuration;
+
+        public UsersApiController(IRepository<Project> projectRepository, UserManager<User> userManager, SignInManager<User> signInManager, IRepository<User> userRepository, IUnitOfWork unitOfWork, IRepository<UserInfo> userInfoRepository, IRepository<NewsSite> newsSiteRepository, IRepository<Customer> customerRepository, PasswordService passwordService = null, IAuthService authService = null, TokenHelper tokenHelper = null, IConfiguration configuration = null)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -44,89 +48,69 @@ namespace MobitekCRMV2.Controllers
             _customerRepository = customerRepository;
             _passwordService = passwordService;
             _authService = authService;
+            _tokenHelper = tokenHelper;
+            _configuration = configuration;
         }
         [HttpGet("index")]
-        public async Task<IActionResult> Index([FromQuery] UserType userType, [FromQuery] bool isAll, [FromQuery] string errorMessage, [FromQuery] string status)
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        public async Task<ActionResult<UsersResponseDto>> Index([FromQuery] UserType userType, [FromQuery] bool isAll, [FromQuery] string status)
         {
-            var allUsers = _userManager.Users.Select(user => new UserDto
+            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+            var claimsPrincipal = _tokenHelper.ValidateToken(_configuration["Jwt:Key"], authHeader);
+
+            if (claimsPrincipal == null)
             {
-                Id = user.Id,
-                Name = user.UserName,
-                UserType = user.UserType,
-                Status = user.Status.ToString(),
-                ExpertProjects = user.ExpertProjects.Select(project => new ProjectDto
-                {
-                    ProjectId = project.Id,
-                    ProjectName = project.Name,
-                    Budget = !string.IsNullOrEmpty(project.Budget) ? Convert.ToInt32(project.Budget.Replace(".", "")) : (int?)null
-                }).ToList()
-            }).ToList();
-
-            var usersWithTypes = _userRepository.Table.AsNoTracking()
-                .Include(x => x.ExpertProjects.Where(y => y.Status == Status.Active))
-                .Where(user => user.UserType == userType && user.Status == Status.Active)
-                .Select(user => new UserDto
-                {
-                    Id = user.Id,
-                    Name = user.UserName,
-                    UserType = user.UserType,
-                    Status = user.Status.ToString(),
-                    ExpertProjects = user.ExpertProjects.Select(project => new ProjectDto
-                    {
-                        ProjectId = project.Id,
-                        ProjectName = project.Name,
-                        Budget = !string.IsNullOrEmpty(project.Budget) ? Convert.ToInt32(project.Budget.Replace(".", "")) : (int?)null
-                    }).ToList()
-                })
-                .ToList();
-
-            var totalBudget = usersWithTypes.Sum(user => user.ExpertProjects.Sum(project => project.Budget ?? 0));
-
-            if (status == "Passive")
-            {
-                var passiveUsers = _userRepository.Table.AsNoTracking()
-                    .Where(user => user.Status == Status.Passive)
-                    .Select(user => new UserDto
-                    {
-                        Id = user.Id,
-                        Name = user.UserName,
-                        UserType = user.UserType,
-                        Status = user.Status.ToString(),
-                        ExpertProjects = user.ExpertProjects.Select(project => new ProjectDto
-                        {
-                            ProjectId = project.Id,
-                            ProjectName = project.Name,
-                            Budget = !string.IsNullOrEmpty(project.Budget) ? Convert.ToInt32(project.Budget.Replace(".", "")) : (int?)null
-                        }).ToList()
-                    })
-                    .ToList();
-
-                return Ok(new IndexResponseDto
-                {
-                    Users = passiveUsers,
-                    ErrorMessage = errorMessage,
-                    TotalBudget = 0 
-                });
+                return Unauthorized();
             }
 
-            if (!isAll)
+            var userName = claimsPrincipal.FindFirst(ClaimTypes.Name)?.Value;
+            var userRole = claimsPrincipal.FindFirst(ClaimTypes.Role)?.Value;
+            try
             {
-                return Ok(new IndexResponseDto
+                var users = isAll
+                    ? await _userManager.Users.ToListAsync()
+                    : await _userRepository.Table
+                        .AsNoTracking()
+                        .Include(x => x.ExpertProjects.Where(y => y.Status == Status.Active))
+                        .Where(user => user.UserType == userType && user.Status == Status.Active)
+                        .ToListAsync();
+
+                if (status == "Passive")
                 {
-                    Users = usersWithTypes,
+                    users = await _userRepository.Table
+                        .AsNoTracking()
+                        .Where(user => user.Status == Status.Passive)
+                        .ToListAsync();
+                }
+
+                var userDtos = users.Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    ProjectCount = u.ExpertProjects?.Count(p => p.Status == Status.Active) ?? 0,
+                  //  KeywordCount = u.ExpertProjects?.Sum(p => p.KeywordCount) ?? 0,
+                    Budget = u.ExpertProjects?.Sum(p => decimal.TryParse(p.Budget?.Replace(".", ""), out decimal budget) ? budget : 0) ?? 0
+                }).ToList();
+
+                decimal totalBudget = userDtos.Sum(u => u.Budget);
+
+                return Ok(new UsersResponseDto
+                {
+                    Users = userDtos,
                     UserType = userType,
-                    ErrorMessage = errorMessage,
+                    ErrorMessage = null,
                     TotalBudget = totalBudget
                 });
             }
-
-            return Ok(new IndexResponseDto
+            catch (Exception ex)
             {
-                Users = allUsers,
-                ErrorMessage = errorMessage,
-                TotalBudget = totalBudget
-            });
+                return StatusCode(500, new UsersResponseDto { ErrorMessage = ex.Message });
+            }
         }
+
+
 
 
         [HttpGet("login")]
@@ -178,5 +162,6 @@ namespace MobitekCRMV2.Controllers
         }
 
     }
+    
 }
 
