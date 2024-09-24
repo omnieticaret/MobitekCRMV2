@@ -48,16 +48,8 @@ namespace MobitekCRMV2.Controllers
         [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> Index()
         {
-            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-            var claimsPrincipal = _tokenHelper.ValidateToken(_configuration["Jwt:Key"], authHeader);
-
-            if (claimsPrincipal == null)
-            {
-                return Unauthorized();
-            }
-
-            var userName = claimsPrincipal.FindFirst(ClaimTypes.Name)?.Value;
-            var userRole = claimsPrincipal.FindFirst(ClaimTypes.Role)?.Value;
+            var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
+            var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
 
             // Kullanıcıyı database'den al
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == userName);

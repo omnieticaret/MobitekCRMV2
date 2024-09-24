@@ -55,16 +55,8 @@ namespace MobitekCRMV2.Controllers
         [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<ActionResult<UsersResponseDto>> Index([FromQuery] UserType userType, [FromQuery] bool isAll, [FromQuery] string status)
         {
-            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-            var claimsPrincipal = _tokenHelper.ValidateToken(_configuration["Jwt:Key"], authHeader);
-
-            if (claimsPrincipal == null)
-            {
-                return Unauthorized();
-            }
-
-            var userName = claimsPrincipal.FindFirst(ClaimTypes.Name)?.Value;
-            var userRole = claimsPrincipal.FindFirst(ClaimTypes.Role)?.Value;
+            var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
+            var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
             try
             {
                 var users = isAll

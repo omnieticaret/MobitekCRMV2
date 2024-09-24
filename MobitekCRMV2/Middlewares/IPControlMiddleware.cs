@@ -1,65 +1,68 @@
-﻿using MobitekCRMV2.Extensions;
+﻿using MobitekCRMV2.Authentication;
+using MobitekCRMV2.Extensions;
 using System.Net;
 
 namespace MobitekCRMV2.Middlewares
 {
     public class IPControlMiddleware
     {
+        private readonly RequestDelegate _next;
+        private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _accessor;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-
-        readonly RequestDelegate _next;
-        IConfiguration _configuration;
-        public IPControlMiddleware(RequestDelegate next, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public IPControlMiddleware(RequestDelegate next, IConfiguration configuration, IHttpContextAccessor accessor, IServiceScopeFactory serviceScopeFactory)
         {
-            _configuration = configuration;
             _next = next;
-            _accessor = httpContextAccessor; // Dependency Injection:
+            _configuration = configuration;
+            _accessor = accessor;
+            _serviceScopeFactory = serviceScopeFactory;
         }
+
         public async Task Invoke(HttpContext context)
         {
-            //Client'ın IP adresini alıyoruz.
-            //bool gettingIp = _accessor.
-            //bool gettingIp = context.TryToGetIpAddress(out string ipAddress);
-            //Whitelist'te ki tüm IP'leri çekiyoruz.
-            var ips = _configuration.GetSection("AllowedIPAddresses")?.Value;
-            var IP = _accessor.GetIpAddress();
-            var ipList = ips.Split(';');
-            //Client IP, whitelist'te var mı kontrol ediyoruz.
-            if (!ipList.Contains(IP))
+            var ipAddress = _accessor.HttpContext.Connection.RemoteIpAddress?.ToString();
+            var allowedIPs = _configuration.GetSection("AllowedIPAddresses")?.Value;
+            var ipList = allowedIPs.Split(';');
+            var url = context.Request.Path;
+
+            if (!ipList.Contains(ipAddress))
             {
-                //Eğer yoksa 403 hatası veriyoruz.
                 context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                await context.Response.WriteAsync("Bu IP'nin erişim yetkisi yoktur. Current ip = " + IP);
+                await context.Response.WriteAsync("Bu IP'nin erişim yetkisi yoktur. Current IP = " + ipAddress);
                 return;
             }
+            if (!url.Value.Contains("/users"))
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var tokenHelper = scope.ServiceProvider.GetRequiredService<TokenHelper>();
+
+                    var authHeader = context.Request.Headers["Authorization"].ToString();
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        var claimsPrincipal = tokenHelper.ValidateToken(_configuration["Jwt:Key"], authHeader);
+                        if (claimsPrincipal != null)
+                        {
+                            context.User = claimsPrincipal;
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                            await context.Response.WriteAsync("Geçersiz token.");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        await context.Response.WriteAsync("Token eksik.");
+                        return;
+                    }
+                }
+            }
+    
             await _next.Invoke(context);
         }
-        //[HttpGet("GetAllHeaders")]
-        //public ActionResult<Dictionary<string, string>> GetAllHeaders()
-        //{
-
-        //    Dictionary<string, string> requestHeaders =
-        //       new Dictionary<string, string>();
-        //    foreach (var header in Request.Headers)
-        //    {
-        //        requestHeaders.Add(header.Key, header.Value);
-        //    }
-        //    return requestHeaders;
-        //}
-
-        //public static string GetClientIp()
-        //{
-        //    var ipAddress = string.Empty;
-
-        //    if (HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"] != null)
-        //        ipAddress = HttpContext.Current.Request.ServerVariables["HTTP_X_FORWARDED_FOR"].ToString();
-        //    else if (HttpContext.Current.Request.ServerVariables["HTTP_CLIENT_IP"] != null && HttpContext.Current.Request.ServerVariables["HTTP_CLIENT_IP"].Length != 0)
-        //        ipAddress = HttpContext.Current.Request.ServerVariables["HTTP_CLIENT_IP"];
-        //    else if (HttpContext.Current.Request.UserHostAddress.Length != 0)
-        //        ipAddress = HttpContext.Current.Request.UserHostName;
-        //    System.Web.
-        //    return ipAddress;
-        //}
     }
 }
