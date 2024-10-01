@@ -6,8 +6,9 @@ using MobitekCRMV2.Authentication;
 using MobitekCRMV2.DataAccess.Context;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
-using MobitekCRMV2.Dto.Dtos;
+using MobitekCRMV2.Dto.Dtos.CustomerDto;
 using MobitekCRMV2.Entity.Entities;
+using MobitekCRMV2.Entity.Enums;
 using Newtonsoft.Json;
 using System.Security.Claims;
 
@@ -87,5 +88,43 @@ namespace MobitekCRMV2.Controllers
             return Content(JsonConvert.SerializeObject(viewModel), "application/json");
 
         }
+
+        //[HttpGet("add")]
+        //public async Task<IActionResult> GetAddCustomerData()
+        //{
+        //    var model = new CustomerAddDto
+        //    {
+        //        UserIds = _userManager.Users.Select(u => u.Id).ToList(),
+        //        CustomerRepresentatives = _userRepository.Table.Where(x => x.UserType == UserType.Customer).ToList()
+        //    };
+        //    return Ok(model);
+        //}
+
+        [HttpPost("add")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        public async Task<IActionResult> AddCustomer([FromBody] CreateCustomerDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("Müşteri Eklenemedi, bilgileri kontrol ediniz");
+            }
+            
+            var customer = new Customer
+            {
+                CompanyName = model.CompanyName,
+                CompanyAddress = model.CompanyAddress,
+                CompanyEmail = model.CompanyEmail,
+                CompanyPhone = model.CompanyPhone,
+                CompanyOfficialWebsite = model.CompanyOfficialWebsite,
+            CustomerType = Enum.Parse<CustomerType>(model.CustomerType)
+
+            };
+            await _customerRepository.AddAsync(customer);
+            await _unitOfWork.CommitAsync();
+            return Ok("Müşteri başarıyla eklendi");
+        }
+
+ 
+
     }
 }

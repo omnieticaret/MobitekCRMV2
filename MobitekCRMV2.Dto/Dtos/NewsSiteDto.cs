@@ -12,5 +12,13 @@ namespace MobitekCRMV2.Dto.Dtos
         public string Name { get; set; }
         public int OrganicTraffic { get; set; }
         public string UserName { get; set; }
+        public int Pa { get; set; }
+        public int Da { get; set; }
+
+        public string EditorMail { get; set; }
+        public string PostData { get; set; }
+
+        public string Sr_traffic { get; set; }
+        public string Sr_kwords { get; set; }
     }
 }

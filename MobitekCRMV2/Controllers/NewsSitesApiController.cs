@@ -39,11 +39,14 @@ namespace MobitekCRMV2.Controllers
                 Id = x.Id,
                 Name = x.Name,
                 OrganicTraffic = x.OrganicTraffic,
-             
-                //UserName = x.User.UserName
+                Pa = x.PAScore,
+                Da = x.DAScore,
+                EditorMail = x.EditorMail,
+
+                //   UserName = x.User.UserName
             }).ToList();
 
-            return Ok(newsSiteDtos); 
+            return Ok(newsSiteDtos);
         }
     }
 }
