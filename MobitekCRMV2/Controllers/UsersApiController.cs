@@ -7,7 +7,8 @@ using MobitekCRMV2.Authentication;
 using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
-using MobitekCRMV2.Dto.Dtos;
+using MobitekCRMV2.Dto.Dtos.UserDto;
+using MobitekCRMV2.Dto.Dtos.UserDto.UserDto;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Model.Models;
@@ -75,7 +76,7 @@ namespace MobitekCRMV2.Controllers
                         .ToListAsync();
                 }
 
-                var userDtos = users.Select(u => new UserDto
+                var userDtos = users.Select(u => new UserListDto
                 {
                     Id = u.Id,
                     UserName = u.UserName,
@@ -154,6 +155,8 @@ namespace MobitekCRMV2.Controllers
         }
 
     }
-    
+
+
 }
+
 

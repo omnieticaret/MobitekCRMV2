@@ -23,7 +23,7 @@ namespace MobitekCRMV2.Controllers
         }
 
         [HttpGet("Index")]
-        [Authorize(AuthenticationSchemes = "Bearer")]
+
         public async Task<ActionResult<List<NewsSiteDto>>> Index()
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
