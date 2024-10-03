@@ -8,6 +8,7 @@ using MobitekCRMV2.DataAccess.Context;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
 using MobitekCRMV2.Dto.Dtos;
+using MobitekCRMV2.Dto.Dtos.ProjectDto;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Jobs;
@@ -18,6 +19,7 @@ namespace MobitekCRMV2.Controllers
 {
     [Route("api/projects")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = "Bearer")]
 
     public class ProjectsApiController : ControllerBase
     {
@@ -67,7 +69,7 @@ namespace MobitekCRMV2.Controllers
         }
         #endregion
         [HttpGet("index")]
-        [Authorize(AuthenticationSchemes = "Bearer")]
+
         public async Task<IActionResult> Index(ProjectType projectType, Status status, bool isAll)
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
@@ -135,7 +137,102 @@ namespace MobitekCRMV2.Controllers
             return Content(JsonConvert.SerializeObject(viewModel), "application/json");
         }
 
+        [HttpPost("createProject")]
+        public async Task<IActionResult> CreateProject([FromBody] CreateProjectDto dto)
+        {
+            try
+            {
+                var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
+                var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
+                var currentUser = await _context.Users.FirstOrDefaultAsync(x => x.UserName == User.Identity.Name);
+                if (string.IsNullOrEmpty(dto.Url))
+                {
+                    return BadRequest("URL cannot be empty.");
+                }
+
+                if (string.IsNullOrEmpty(dto.ExpertId))
+                {
+                    dto.ExpertId = currentUser?.Id;
+                }
+
+                var project = new Project
+                {
+                    Url = dto.Url,
+                    ProjectType = Enum.Parse<ProjectType>(dto.ProjectType),
+                    ExpertId = dto.ExpertId,
+                    CustomerId = dto.CustomerId,
+                    CustomerTypeUserId = dto.CustomerTypeUserId,
+                    ReportMail = dto.ReportMail,
+                    Budget = dto.Budget,
+                    ContractKeywordCount = dto.ContractKeywordCount ?? 0,
+                    Contract = Enum.Parse<ContractType>(dto.ContractType),
+                    ServerStatus = dto.ServerStatus,
+                    StartDate = DateTime.Parse(dto.StartDate),
+                    ReportDate = DateTime.Parse(dto.ReportDate),
+                    MeetingDate = DateTime.Parse(dto.MeetingDate),
+                    PacketInfo = dto.PacketInfo,
+                    CountryCode = string.Join(",", dto.CountryCodeList),
+                    DevelopmentStatus = dto.DevelopmentStatus,
+                    PlatformId = dto.PlatformId,
+                    AccessInfo = dto.AccessInfo,
+                    Note = dto.Note
+                };
+
+
+                try
+                {
+                    var suffix = "";
+                    if (project.Url.Contains("/en"))
+                        suffix = "/en";
+                    else if (project.Url.Contains("/ar"))
+                        suffix = "/ar";
+                    else if (project.Url.Contains("/tr"))
+                        suffix = "/tr";
+                    project.Url = Helper.GetAuthoritativeUrl(project.Url) + suffix;
+                }
+                catch
+                {
+                    return BadRequest("Invalid URL format. Please check and try again.");
+                }
+
+                if (project.ProjectType == ProjectType.Seo)
+                {
+                    var domain = new Domain { Name = project.Url };
+                    project.Domain = domain;
+                }
+
+                if (dto.CountryCodeList == null || !dto.CountryCodeList.Any())
+                {
+                    project.CountryCode = "tr";
+                }
+                else
+                {
+                    project.CountryCode = string.Join(",", dto.CountryCodeList);
+                }
+
+                await _projectRepository.AddAsync(project);
+                await _unitOfWork.CommitAsync();
+
+                if (project.ProjectType != ProjectType.None)
+                {
+                    _createTodos.CreateTodosFromTemplates(project.Id);
+                }
+
+                return Ok("Proje başarıyla eklendi");
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
     }
+       
+          
 
 }

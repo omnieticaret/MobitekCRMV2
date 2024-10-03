@@ -41,10 +41,6 @@ namespace MobitekCRMV2.Controllers
             _tokenHelper = tokenHelper;
         }
 
-        /// <summary>
-        /// Müşteriler sayfası
-        /// </summary>
-        /// <returns></returns>
         [HttpGet("index")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> Index()
@@ -89,16 +85,6 @@ namespace MobitekCRMV2.Controllers
 
         }
 
-        //[HttpGet("add")]
-        //public async Task<IActionResult> GetAddCustomerData()
-        //{
-        //    var model = new CustomerAddDto
-        //    {
-        //        UserIds = _userManager.Users.Select(u => u.Id).ToList(),
-        //        CustomerRepresentatives = _userRepository.Table.Where(x => x.UserType == UserType.Customer).ToList()
-        //    };
-        //    return Ok(model);
-        //}
 
         [HttpPost("add")]
         [Authorize(AuthenticationSchemes = "Bearer")]
