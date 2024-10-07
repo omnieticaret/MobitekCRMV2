@@ -16,10 +16,12 @@ namespace MobitekCRMV2.Controllers
 {
     [Route("api/customers")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+
     /// <summary>
     /// Müşteri operasyonları
     /// </summary>
-    public class CustomersController : ControllerBase
+    public class CustomersApiController : ControllerBase
     {
         private readonly IRepository<Customer> _customerRepository;
         private readonly IConfiguration _configuration;
@@ -29,7 +31,7 @@ namespace MobitekCRMV2.Controllers
         private readonly CRMDbContext _context;
         private readonly TokenHelper _tokenHelper;
 
-        public CustomersController(IRepository<Customer> customerRepository, IUnitOfWork unitOfWork, UserManager<User> userManager,
+        public CustomersApiController(IRepository<Customer> customerRepository, IUnitOfWork unitOfWork, UserManager<User> userManager,
             IRepository<User> userRepository, CRMDbContext context, IConfiguration configuration, TokenHelper tokenHelper)
         {
             _customerRepository = customerRepository;
@@ -42,7 +44,6 @@ namespace MobitekCRMV2.Controllers
         }
 
         [HttpGet("index")]
-        [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> Index()
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;

@@ -10,7 +10,7 @@ using MobitekCRMV2.Entity.Entities;
 
 namespace MobitekCRMV2.Controllers
 {
-    [Route("api/Platforms")]
+    [Route("api/platforms")]
     [ApiController]
     [Authorize(AuthenticationSchemes = "Bearer")]
     public class PlatformsApiController : ControllerBase

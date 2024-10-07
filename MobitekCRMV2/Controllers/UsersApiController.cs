@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,7 @@ namespace MobitekCRMV2.Controllers
     // [Authorize(Roles = MBCRMRoles.Admin_RoleString + ",viewer")]
     [Route("api/users")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class UsersApiController : ControllerBase
     {
         private readonly IRepository<User> _userRepository;
@@ -53,7 +55,7 @@ namespace MobitekCRMV2.Controllers
             _configuration = configuration;
         }
         [HttpGet("index")]
-        [Authorize(AuthenticationSchemes = "Bearer")]
+
         public async Task<ActionResult<UsersResponseDto>> Index([FromQuery] UserType userType, [FromQuery] bool isAll, [FromQuery] string status)
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
@@ -83,7 +85,7 @@ namespace MobitekCRMV2.Controllers
                     Email = u.Email,
                     PhoneNumber = u.PhoneNumber,
                     ProjectCount = u.ExpertProjects?.Count(p => p.Status == Status.Active) ?? 0,
-                  //  KeywordCount = u.ExpertProjects?.Sum(p => p.KeywordCount) ?? 0,
+                    //  KeywordCount = u.ExpertProjects?.Sum(p => p.KeywordCount) ?? 0,
                     Budget = u.ExpertProjects?.Sum(p => decimal.TryParse(p.Budget?.Replace(".", ""), out decimal budget) ? budget : 0) ?? 0
                 }).ToList();
 
@@ -111,12 +113,6 @@ namespace MobitekCRMV2.Controllers
         {
             return Ok(new UserLoginViewModel());
         }
-
-        /// <summary>
-        /// Login işlemini yapan method. Başarılı ise token veya success mesajı, başarısız ise hata mesajı döner.
-        /// </summary>
-        /// <param name="model">Kullanıcının giriş bilgilerini içerir (Email ve Şifre)</param>
-        /// <returns>Başarı veya hata mesajı</returns>
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginViewModel model)
@@ -137,10 +133,7 @@ namespace MobitekCRMV2.Controllers
 
             if (result.Succeeded)
             {
-                // Kullanıcı rollerini alalım
                 var roles = await _userManager.GetRolesAsync(user);
-
-                // JWT Token üretelim
                 var token = _authService.GenerateJwtToken(user, roles);
 
                 return Ok(new
@@ -154,6 +147,59 @@ namespace MobitekCRMV2.Controllers
             return Unauthorized(new { ErrorMessage = "Email veya parola yanlış" });
         }
 
+        [HttpPost("add")]
+
+        public async Task<IActionResult> Add(CreateUserDto createUserDto)
+        {
+   
+            IdentityResult result = null;
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var user = new User
+                {
+                    UserName = createUserDto.UserName,
+                    Email = createUserDto.Email,
+                    UserType = Enum.Parse<UserType>(createUserDto.UserType),
+                    PhoneNumber = createUserDto.PhoneNumber,
+                    Status = Enum.Parse<Status>(createUserDto.Status)
+                };
+
+                result = await _userManager.CreateAsync(user, createUserDto.Password);
+
+                if (result.Succeeded)
+                {
+                    await _unitOfWork.CommitAsync();
+
+                    if (user.UserType == UserType.SeoExpert)
+                        await _userManager.AddToRoleAsync(user, "seo_expert");
+                    else if (user.UserType == UserType.SemExpert)
+                        await _userManager.AddToRoleAsync(user, "sem_expert");
+                    else if (user.UserType == UserType.Customer)
+                        await _userManager.AddToRoleAsync(user, "customer");
+
+                    if (user.UserName.Contains("Admin") || user.UserName.Contains("Turgut"))
+                        await _userManager.AddToRoleAsync(user, "admin");
+
+                    await _unitOfWork.CommitAsync();
+                    return Ok("Kullanıcı başarıyla eklendi");
+                }
+                else
+                {
+                    return BadRequest("Kullanıcı Eklenemedi!");
+                }
+
+            }
+            catch (Exception)
+            {
+                return BadRequest(new { Errors = result.Errors.Select(e => e.Description) });
+            }
+
+        }
     }
 
 

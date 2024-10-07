@@ -14,7 +14,7 @@ namespace MobitekCRMV2.Dto.Dtos.UserDto.UserDto
         public string Email { get; set; }    
         public string PhoneNumber { get; set; }
         public string UserType { get; set; } 
-        public bool Status { get; set; } 
+        public string Status { get; set; } 
         public string ErrorMessage { get; set; }
     }
 
