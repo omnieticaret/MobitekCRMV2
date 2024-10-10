@@ -9,29 +9,29 @@ namespace MobitekCRMV2.Entity.Entities
     public class Project : EntityBase<string>
     {
 
-        public ProjectType ProjectType { get; set; } //Proje Tipi
+        public ProjectType ProjectType { get; set; } 
 
-        public string Url { get; set; } //Proje Url
-        public string AuthoritativeUrl { get; set; } //Proje Url
-        public string Name { get; set; } //Proje Adı
-        public string ReportMail { get; set; } //Rapor CC
-        public string Phone { get; set; } //Telefon
-        public string Budget { get; set; } //Bütçe
-        public int ContractKeywordCount { get; set; } //Sözleşme kelime sayısı
-        public ContractType Contract { get; set; } //Sözleşme
-
-        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
-        public DateTime StartDate { get; set; } //Başlangıç Tarihi
+        public string Url { get; set; }
+        public string AuthoritativeUrl { get; set; }
+        public string Name { get; set; } 
+        public string ReportMail { get; set; } 
+        public string Phone { get; set; } 
+        public string Budget { get; set; } 
+        public int ContractKeywordCount { get; set; } 
+        public ContractType Contract { get; set; } 
 
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
-        public DateTime ReportDate { get; set; } //Rapor Tarihi
+        public DateTime StartDate { get; set; } 
 
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
-        public DateTime MeetingDate { get; set; } //Toplantı Tarihi
+        public DateTime ReportDate { get; set; } 
 
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
-        public DateTime StatusUpdateDate { get; set; } //statüsünün değiştirilme tarihi
-        public Status Status { get; set; } //Durumu
+        public DateTime MeetingDate { get; set; } 
+
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public DateTime StatusUpdateDate { get; set; } 
+        public Status Status { get; set; } 
         public string Note { get; set; }
         public string CountryCode { get; set; }
         public string AccessInfo { get; set; }

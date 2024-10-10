@@ -99,7 +99,7 @@ namespace MobitekCRMV2.Controllers
 
             model.UserList = model.UserList.OrderBy(x => x.User.Status).ToList();
 
-            return Ok(model); // API için JSON olarak döndürme
+            return Ok(model); 
         }
 
         [HttpGet("assignrole/{id}")]
