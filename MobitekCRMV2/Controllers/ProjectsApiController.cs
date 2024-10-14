@@ -419,63 +419,62 @@ namespace MobitekCRMV2.Controllers
                     }
                 }
             }
-            model.Project = new ProjectDetailDto
+            model.Project = new ProjectListDto
             {
-                Project = new ProjectListDto
-                {
-                    Id = project.Id,
-                    ProjectType = project.ProjectType.ToString(),
-                    ExpertId = project.ExpertId,
-                    CustomerId = project.CustomerId,
-                    ReportMail = project.ReportMail,
-                    Phone = project.Phone,
-                    Budget = project.Budget,
-                    ContractKeywordCount = project.ContractKeywordCount,
-                    Contract = project.Contract.ToString(),
-                    StartDate = project.StartDate,
-                    ReportDate = project.ReportDate,
-                    MeetingDate = project.MeetingDate,
-                    PacketInfo = project.PacketInfo,
-                    DevelopmentStatus = project.DevelopmentStatus,
-                    PlatformId = project.PlatformId,
-                    ServerStatus = project.ServerStatus,
-                    CountryCode = project.CountryCode,
-                    AccessInfo = project.AccessInfo,
-                    Note = project.Note,
-                    Status = project.Status.ToString(),
-                },
-                Keywords = keywords.FirstOrDefault() != null ? new KeywordDto
-                {
-                    Id = keywords.First().Id,
-                    Keyword = keywords.First().KeywordName,
-                    IsStarred = keywords.First().IsStarred,
-                    KeywordValues = keywords.First().KeywordValues.Select(kv => new KeywordValueDto
-                    {
-                        Id = kv.Id,
-                        CountryCode = kv.CountryCode,
-                        Position = kv.Position,
-                        Date = kv.CreatedDate.ToString("yyyy-MM-dd")
-                    }).ToList()
-                } : null,
-                Customers = new List<CustomerListDto>
-{
-    new CustomerListDto
-    {
-        Id = project.Customer.Id,
-        CompanyName = project.Customer.CompanyName,
-        CompanyAddress = project.Customer.CompanyAddress,
-        CompanyEmail = project.Customer.CompanyEmail,
-        CompanyPhone = project.Customer.CompanyPhone,
-        CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
-        CustomerType = project.Customer.CustomerType.ToString(),
-        CustomerRepresentative = project.Customer.CustomerRepresentative.UserName,
-        Projects = project.Customer.Projects.ToString()
-    } }
+                Id = project.Id,
+                ProjectType = project.ProjectType.ToString(),
+                ExpertId = project.ExpertId,
+                CustomerId = project.CustomerId,
+                ReportMail = project.ReportMail,
+                Phone = project.Phone,
+                Budget = project.Budget,
+                ContractKeywordCount = project.ContractKeywordCount,
+                Contract = project.Contract.ToString(),
+                StartDate = project.StartDate,
+                ReportDate = project.ReportDate,
+                MeetingDate = project.MeetingDate,
+                PacketInfo = project.PacketInfo,
+                DevelopmentStatus = project.DevelopmentStatus,
+                PlatformId = project.PlatformId,
+                ServerStatus = project.ServerStatus,
+                CountryCode = project.CountryCode,
+                AccessInfo = project.AccessInfo,
+                Note = project.Note,
+                Status = project.Status.ToString(),
+            };
 
-        };
+            model.Keywords = keywords.FirstOrDefault() != null ? new KeywordDto
+            {
+                Id = keywords.First().Id,
+                Keyword = keywords.First().KeywordName,
+                IsStarred = keywords.First().IsStarred,
+                KeywordValues = keywords.First().KeywordValues.Select(kv => new KeywordValueDto
+                {
+                    Id = kv.Id,
+                    CountryCode = kv.CountryCode,
+                    Position = kv.Position,
+                    Date = kv.CreatedDate.ToString("yyyy-MM-dd")
+                }).ToList()
+            } : null;
 
-        
+            model.Customers = new List<CustomerListDto>
+        {
+                new CustomerListDto
+                {
+                    Id = project.Customer.Id,
+                    CompanyName = project.Customer.CompanyName,
+                    CompanyAddress = project.Customer.CompanyAddress,
+                    CompanyEmail = project.Customer.CompanyEmail,
+                    CompanyPhone = project.Customer.CompanyPhone,
+                    CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
+                    CustomerType = project.Customer.CustomerType.ToString(),
+                    CustomerRepresentative = project.Customer.CustomerRepresentative.UserName,
+                    Projects = project.Customer.Projects.ToString()
+                }
+            };
+
             return model;
+
         }
     }
 
