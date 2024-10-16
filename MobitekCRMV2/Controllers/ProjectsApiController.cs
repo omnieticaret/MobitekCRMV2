@@ -457,21 +457,30 @@ namespace MobitekCRMV2.Controllers
                 }).ToList()
             } : null;
 
-            model.Customers = new List<CustomerListDto>
-        {
-                new CustomerListDto
+            if (project.Customer != null)
+            {
+                model.Customers = new List<CustomerListDto>
                 {
-                    Id = project.Customer.Id,
-                    CompanyName = project.Customer.CompanyName,
-                    CompanyAddress = project.Customer.CompanyAddress,
-                    CompanyEmail = project.Customer.CompanyEmail,
-                    CompanyPhone = project.Customer.CompanyPhone,
-                    CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
-                    CustomerType = project.Customer.CustomerType.ToString(),
-                    CustomerRepresentative = project.Customer.CustomerRepresentative.UserName,
-                    Projects = project.Customer.Projects.ToString()
-                }
-            };
+                    new CustomerListDto
+                    {
+                        Id = project.Customer.Id,
+                        CompanyName = project.Customer.CompanyName,
+                        CompanyAddress = project.Customer.CompanyAddress,
+                        CompanyEmail = project.Customer.CompanyEmail,
+                        CompanyPhone = project.Customer.CompanyPhone,
+                        CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
+                        CustomerType = project.Customer.CustomerType.ToString(),
+                        CustomerRepresentative = project.Customer.CustomerRepresentative != null
+                            ? project.Customer.CustomerRepresentative.UserName
+                            : "Unknown",
+                                Projects = project.Customer.Projects?.ToString()
+                            }
+                        };
+            }
+            else
+            {
+                model.Customers = new List<CustomerListDto>();
+            }
 
             return model;
 
