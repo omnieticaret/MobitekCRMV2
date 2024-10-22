@@ -8,6 +8,7 @@ using MobitekCRMV2.Authentication;
 using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
+using MobitekCRMV2.Dto.Dtos.ProjectDto;
 using MobitekCRMV2.Dto.Dtos.UserDto;
 using MobitekCRMV2.Dto.Dtos.UserDto.UserDto;
 using MobitekCRMV2.Entity.Entities;
@@ -105,9 +106,6 @@ namespace MobitekCRMV2.Controllers
             }
         }
 
-
-
-
         [HttpGet("login")]
         public IActionResult Login()
         {
@@ -151,7 +149,7 @@ namespace MobitekCRMV2.Controllers
 
         public async Task<IActionResult> Add(CreateUserDto createUserDto)
         {
-   
+
             IdentityResult result = null;
             try
             {
@@ -200,7 +198,74 @@ namespace MobitekCRMV2.Controllers
             }
 
         }
+
+        [HttpGet("detail/{id}")]
+        public async Task<ActionResult<UserDetailDto>> GetUserDetail(string id)
+        {
+            var user = await _userRepository.Table.AsNoTracking()
+                .Include(x => x.ExpertProjects.Where(y => y.Status == Status.Active))
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var customers = _customerRepository.Table
+                .Where(x => x.CustomerRepresentativeId == user.Id)
+                .ToList();
+
+            if (user.UserType == UserType.Customer)
+            {
+                user.ExpertProjects = _projectRepository.Table.AsNoTracking()
+                    .Where(x => x.Customer.CustomerRepresentativeId == id && x.Status == Status.Active)
+                    .ToList();
+            }
+
+            var userDetailDto = new UserDetailDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Status = user.Status.ToString(),
+                UserType = user.UserType.ToString(),
+                ExpertProjects = user.ExpertProjects.Select(project => new ProjectDetailDto2
+                {
+                    ProjectId = project.Id,
+                    ProjectUrl = project.Url,
+                    Budget = project.Budget,
+                    Duration = CalculateDuration(project.StartDate)
+                }).ToList()
+            };
+
+            return Ok(userDetailDto);
+        }
+
+        private string CalculateDuration(DateTime startDate)
+        {
+            string myString = "";
+            var duration = DateTime.Now - startDate;
+            var totalDays = duration.TotalDays;
+            var totalMonths = totalDays / 30;
+            var totalYears = totalMonths / 12;
+            var months = (int)(totalMonths % 12);
+            var years = (int)(totalYears);
+
+            if (years > 0)
+            {
+                myString = myString + years + " yıl ";
+            }
+            if (months > 0)
+            {
+                myString = myString + months + " ay ";
+            }
+
+            return myString;
+        }
+
     }
+  
 
 
 }

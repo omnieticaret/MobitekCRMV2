@@ -19,7 +19,8 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectDto
         public List<CustomerListDto> Customers { get; set; }
         public string KeywordsAsString { get; set; }
         public string StartDate { get; set; }
-        public KeywordDto Keywords { get; set; }
+
+        public List<KeywordDto> Keywords { get; set; } 
         public string MeetingDate { get; set; }
         public string ReportDate { get; set; }
         public List<BackLinkDto> BackLinks { get; set; }
@@ -35,6 +36,7 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectDto
         public KeywordStatisticDto KeywordStatistic { get; set; }
         public SmPlatformDto PostSmPlatform { get; set; }
 
+
         public ProjectDetailDto()
         {
             Project = new ProjectListDto();
@@ -42,6 +44,7 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectDto
             Customers = new List<CustomerListDto>();
             Platforms = new List<PlatformsListDto>();
             KeywordsAsString = string.Empty;
+            Keywords = new List<KeywordDto>(); 
             KeywordStatistic = new KeywordStatisticDto();
             PostSmPlatform = new SmPlatformDto();
             BackLinks = new List<BackLinkDto>();

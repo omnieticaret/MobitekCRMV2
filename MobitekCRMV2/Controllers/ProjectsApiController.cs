@@ -323,32 +323,28 @@ namespace MobitekCRMV2.Controllers
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == userName);
 
-            //if (string.IsNullOrEmpty(starFilter) && string.IsNullOrEmpty(countryCode))
-            //{
-
-            //    HttpContext.Session.Remove("StarFilter");
-            //    HttpContext.Session.Remove("CountryCode");
-            //}
-            //else
-            //{
-            //    if (!string.IsNullOrEmpty(starFilter)) HttpContext.Session.SetString("starFilter", starFilter);
-            //    else starFilter = HttpContext.Session.GetString("StarFilter");
-
-            //    if (!string.IsNullOrEmpty(countryCode)) HttpContext.Session.SetString("countryCode", countryCode);
-            //    else countryCode = HttpContext.Session.GetString("CountryCode");
-            //}
-
             var project = await _projectRepository.Table.AsNoTracking().IncludeAll().FirstOrDefaultAsync(x => x.Id == id);
-            if (id == null || project == null)
+            if (project == null)
             {
                 return NotFound("Project not found");
+            }
+
+            if (!(User.IsInRole("admin") || User.IsInRole("viewer")))
+            {
+                if (!User.IsInRole("sm_expert") || project.ProjectType != ProjectType.Sm)
+                {
+                    if (!(project.Expert?.UserName == User.Identity?.Name) && !(User.IsInRole("customer") && project.Customer?.CustomerRepresentativeId == user.Id))
+                    {
+                        return Forbid("You can only view details of your own projects");
+                    }
+                }
             }
 
             var model = new ProjectDetailDto();
 
             if (type == "backlink")
             {
-                model.BackLinks = _backlinkRepository.Table
+                model.BackLinks = await _backlinkRepository.Table
                     .AsNoTracking()
                     .Where(x => x.Domain.Project.Id == id)
                     .OrderByDescending(x => x.CreatedAt)
@@ -356,14 +352,16 @@ namespace MobitekCRMV2.Controllers
                     .Select(bl => new BackLinkDto
                     {
                         Id = bl.Id,
+                        // Add other properties as needed
                     })
-                    .ToList();
+                    .ToListAsync();
             }
 
             if (project.ProjectType == ProjectType.Seo)
             {
                 model.DomainId = (await _context.Domains.FirstOrDefaultAsync(x => x.Project.Id == id))?.Id;
             }
+
             model.Users = await _userManager.Users.Select(u => new UserListDto
             {
                 Id = u.Id,
@@ -379,9 +377,9 @@ namespace MobitekCRMV2.Controllers
 
             model.Customers = await _customerRepository.Table.AsNoTracking().Select(c => new CustomerListDto
             {
-                Id = c.Id
+                Id = c.Id,
+                // Add other properties as needed
             }).ToListAsync();
-
 
             if (countryCode == null)
             {
@@ -409,16 +407,6 @@ namespace MobitekCRMV2.Controllers
 
             model.CountryCodeList = _projectsService.StringToList(project.CountryCode);
 
-            if (!(User.IsInRole("admin") || User.IsInRole("viewer")))
-            {
-                if (!User.IsInRole("sm_expert") || project.ProjectType != ProjectType.Sm)
-                {
-                    if (!(project.Expert?.UserName == User.Identity.Name) && !(User.IsInRole("customer") && project.Customer?.CustomerRepresentativeId == user.Id))
-                    {
-                        return Forbid("You can only view details of your own projects");
-                    }
-                }
-            }
             model.Project = new ProjectListDto
             {
                 Id = project.Id,
@@ -443,39 +431,37 @@ namespace MobitekCRMV2.Controllers
                 Status = project.Status.ToString(),
             };
 
-            model.Keywords = keywords.FirstOrDefault() != null ? new KeywordDto
+            model.Keywords = keywords.Select(k => new KeywordDto
             {
-                Id = keywords.First().Id,
-                Keyword = keywords.First().KeywordName,
-                IsStarred = keywords.First().IsStarred,
-                KeywordValues = keywords.First().KeywordValues.Select(kv => new KeywordValueDto
+                Id = k.Id,
+                Keyword = k.KeywordName,
+                IsStarred = k.IsStarred,
+                KeywordValues = k.KeywordValues.Select(kv => new KeywordValueDto
                 {
                     Id = kv.Id,
                     CountryCode = kv.CountryCode,
                     Position = kv.Position,
                     Date = kv.CreatedDate.ToString("yyyy-MM-dd")
                 }).ToList()
-            } : null;
+            }).ToList();
 
             if (project.Customer != null)
             {
                 model.Customers = new List<CustomerListDto>
-                {
-                    new CustomerListDto
-                    {
-                        Id = project.Customer.Id,
-                        CompanyName = project.Customer.CompanyName,
-                        CompanyAddress = project.Customer.CompanyAddress,
-                        CompanyEmail = project.Customer.CompanyEmail,
-                        CompanyPhone = project.Customer.CompanyPhone,
-                        CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
-                        CustomerType = project.Customer.CustomerType.ToString(),
-                        CustomerRepresentative = project.Customer.CustomerRepresentative != null
-                            ? project.Customer.CustomerRepresentative.UserName
-                            : "Unknown",
-                                Projects = project.Customer.Projects?.ToString()
-                            }
-                        };
+        {
+            new CustomerListDto
+            {
+                Id = project.Customer.Id,
+                CompanyName = project.Customer.CompanyName,
+                CompanyAddress = project.Customer.CompanyAddress,
+                CompanyEmail = project.Customer.CompanyEmail,
+                CompanyPhone = project.Customer.CompanyPhone,
+                CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
+                CustomerType = project.Customer.CustomerType.ToString(),
+                CustomerRepresentative = project.Customer.CustomerRepresentative?.UserName ?? "Unknown",
+                Projects = project.Customer.Projects?.ToString()
+            }
+        };
             }
             else
             {
@@ -483,8 +469,7 @@ namespace MobitekCRMV2.Controllers
             }
 
             return model;
-
         }
-    }
 
+    }
 }

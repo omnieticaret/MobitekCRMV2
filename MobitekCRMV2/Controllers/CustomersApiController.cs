@@ -88,7 +88,7 @@ namespace MobitekCRMV2.Controllers
 
 
         [HttpPost("add")]
-        [Authorize(AuthenticationSchemes = "Bearer")]
+
         public async Task<IActionResult> AddCustomer([FromBody] CreateCustomerDto model)
         {
             if (!ModelState.IsValid)
@@ -111,7 +111,56 @@ namespace MobitekCRMV2.Controllers
             return Ok("Müşteri başarıyla eklendi");
         }
 
- 
 
+        [HttpGet("detail/{id}")]
+        public async Task<ActionResult<CustomerDetailDto>> GetCustomerDetail(string id)
+        {
+            var customer = await _customerRepository.Table
+                                                    .Include(x => x.CustomerRepresentative)
+                                                    .Include(x => x.Projects)
+                                                    .FirstOrDefaultAsync(x => x.Id == id);
+            if (customer == null)
+            {
+                return NotFound("Customer not found");
+            }
+
+            var customerRepresentatives = await _userRepository.Table
+                                                               .Where(x => x.UserType == UserType.Customer)
+                                                               .OrderBy(x => x.UserName)
+                                                               .Select(x => new CustomerRepresentativeDto
+                                                               {
+                                                                   Id = x.Id,
+                                                                   UserName = x.UserName
+                                                               })
+                                                               .ToListAsync();
+            var customerDetailDto = new CustomerDetailDto
+            {
+                Id = customer.Id,
+                CompanyName = customer.CompanyName,
+                CustomerRepresentativeId = customer.CustomerRepresentativeId,
+                CustomerRepresentativeName = customer.CustomerRepresentative?.UserName,
+                CompanyAddress = customer.CompanyAddress,
+                CompanyEmail = customer.CompanyEmail,
+                CompanyPhone = customer.CompanyPhone,
+                CompanyOfficialWebsite = customer.CompanyOfficialWebsite,
+                CustomerType = customer.CustomerType.ToString(),
+                Projects = customer.Projects.Select(p => new ProjectDto
+                {
+                    Id = p.Id,
+                    ProjectType = p.ProjectType.ToString(),
+                    Status = p.Status.ToString(),
+                    Budget = p.Budget,
+                    Contract = p.Contract.ToString(),
+                    StartDate = p.StartDate,
+                    EndDate = p.ReportDate
+                }).ToList()
+            };
+
+            return Ok(new
+            {
+                Customer = customerDetailDto,
+                CustomerRepresentatives = customerRepresentatives
+            });
+        }
     }
 }
