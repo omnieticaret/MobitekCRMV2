@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MobitekCRMV2.Dto.Dtos.UserDto.UserDto
+namespace MobitekCRMV2.Dto.Dtos.UserDto.UsersDto
 {
     public class CreateUserDto
     {

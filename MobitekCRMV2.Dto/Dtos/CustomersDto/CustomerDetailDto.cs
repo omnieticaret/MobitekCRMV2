@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MobitekCRMV2.Dto.Dtos.CustomerDto
+namespace MobitekCRMV2.Dto.Dtos.CustomersDto
 {
 
     public class CustomerDetailDto
@@ -18,10 +18,10 @@ namespace MobitekCRMV2.Dto.Dtos.CustomerDto
         public string CompanyPhone { get; set; }
         public string CompanyOfficialWebsite { get; set; }
         public string CustomerType { get; set; }
-        public List<ProjectDto> Projects { get; set; }
+        public List<ProjectDto11> Projects { get; set; }
     }
 
-    public class ProjectDto
+    public class ProjectDto11
     {
         public string Id { get; set; }
         public string ProjectType { get; set; }

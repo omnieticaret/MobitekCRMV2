@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MobitekCRMV2.Dto.Dtos.ProjectDto
+namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
 {
     public class CreateProjectDto
     {

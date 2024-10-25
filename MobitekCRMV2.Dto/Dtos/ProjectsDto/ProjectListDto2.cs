@@ -1,11 +1,10 @@
-﻿using MobitekCRMV2.Dto.Dtos.ProjectDto;
-using MobitekCRMV2.Entity.Entities;
+﻿using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace MobitekCRMV2.Dto.Dtos
+namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
 {
-    public class ProjectListDto
+    public class ProjectListDto2
     {
         public string Id { get; set; }
         public string Url { get; set; }
@@ -36,7 +35,7 @@ namespace MobitekCRMV2.Dto.Dtos
         public DateTime MeetingDate { get; set; }
         public string Status { get; set; }
 
-        
+
         public string Note { get; set; }
         public string CountryCode { get; set; }
         public string AccessInfo { get; set; }
@@ -49,5 +48,5 @@ namespace MobitekCRMV2.Dto.Dtos
         public string PlatformId { get; set; }
         public string DomainId { get; set; }
     }
-   
+
 }

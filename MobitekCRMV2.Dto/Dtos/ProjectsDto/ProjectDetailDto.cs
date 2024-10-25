@@ -1,6 +1,7 @@
-﻿using MobitekCRMV2.Dto.Dtos.CustomerDto;
+﻿using MobitekCRMV2.Dto.Dtos.CustomersDto;
 using MobitekCRMV2.Dto.Dtos.PlatformsDto;
-using MobitekCRMV2.Dto.Dtos.UserDto;
+using MobitekCRMV2.Dto.Dtos.UsersDto;
+using MobitekCRMV2.Dto.Dtos.UsersDtos;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using System;
@@ -9,21 +10,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MobitekCRMV2.Dto.Dtos.ProjectDto
+namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
 {
     public class ProjectDetailDto
     {
-        public ProjectListDto Project { get; set; }
-        public List<PlatformsListDto> Platforms { get; set; }
-        public List<UserListDto> Users { get; set; }
-        public List<CustomerListDto> Customers { get; set; }
+        public ProjectListDto2 Project { get; set; }
+        public List<PlatformsListDto2> Platforms { get; set; }
+        public List<UserListDto2> Users { get; set; }
+        public List<CustomerListDto2> Customers { get; set; }
         public string KeywordsAsString { get; set; }
         public string StartDate { get; set; }
 
-        public List<KeywordDto> Keywords { get; set; } 
+        public List<KeywordDto11> Keywords { get; set; } 
         public string MeetingDate { get; set; }
         public string ReportDate { get; set; }
-        public List<BackLinkDto> BackLinks { get; set; }
+        public List<BackLinkDto11> BackLinks { get; set; }
         public string DomainId { get; set; }
         public string ErrorMessage { get; set; }
         public string ReturnType { get; set; }
@@ -34,25 +35,25 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectDto
         public string? H1 { get; set; }
         public List<string> CountryCodeList { get; set; }
         public KeywordStatisticDto KeywordStatistic { get; set; }
-        public SmPlatformDto PostSmPlatform { get; set; }
+        public SmPlatformDto11 PostSmPlatform { get; set; }
 
 
         public ProjectDetailDto()
         {
-            Project = new ProjectListDto();
-            Users = new List<UserListDto>();
-            Customers = new List<CustomerListDto>();
-            Platforms = new List<PlatformsListDto>();
+            Project = new ProjectListDto2();
+            Users = new List<UserListDto2>();
+            Customers = new List<CustomerListDto2>();
+            Platforms = new List<PlatformsListDto2>();
             KeywordsAsString = string.Empty;
-            Keywords = new List<KeywordDto>(); 
+            Keywords = new List<KeywordDto11>(); 
             KeywordStatistic = new KeywordStatisticDto();
-            PostSmPlatform = new SmPlatformDto();
-            BackLinks = new List<BackLinkDto>();
+            PostSmPlatform = new SmPlatformDto11();
+            BackLinks = new List<BackLinkDto11>();
             CountryCodeList = new List<string>();
         }
     }
 
-    public class BackLinkDto
+    public class BackLinkDto11
     {
         public string Id { get; set; }
         public string Status { get; set; }
@@ -71,7 +72,7 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectDto
         public int EstimatedTraffic { get; set; }
     }
 
-    public class SmPlatformDto
+    public class SmPlatformDto11
     {
         public string Name { get; set; }
         public string Link { get; set; }
@@ -80,15 +81,15 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectDto
         public string ProjectId { get; set; }
     }
 
-    public class KeywordDto
+    public class KeywordDto11
     {
         public string Id { get; set; }
         public string Keyword { get; set; }
         public bool IsStarred { get; set; }
-        public List<KeywordValueDto> KeywordValues { get; set; }
+        public List<KeywordValueDto11> KeywordValues { get; set; }
     }
 
-    public class KeywordValueDto
+    public class KeywordValueDto11
     {
         public string Id { get; set; }
         public string CountryCode { get; set; }

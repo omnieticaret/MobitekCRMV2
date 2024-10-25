@@ -24,7 +24,7 @@ namespace MobitekCRMV2.Controllers
 
         [HttpGet("Index")]
 
-        public async Task<ActionResult<List<NewsSiteDto>>> Index()
+        public async Task<ActionResult<List<NewsSiteDto2>>> Index()
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
@@ -34,7 +34,7 @@ namespace MobitekCRMV2.Controllers
                 .Include(x => x.User)
                 .ToListAsync();
 
-            var newsSiteDtos = newsSites.Select(x => new NewsSiteDto
+            var newsSiteDtos = newsSites.Select(x => new NewsSiteDto2
             {
                 Id = x.Id,
                 Name = x.Name,

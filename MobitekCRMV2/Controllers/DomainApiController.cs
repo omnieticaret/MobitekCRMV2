@@ -44,7 +44,7 @@ namespace MobitekCRMV2.Controllers
       
         [HttpGet("index")]
         [Authorize(AuthenticationSchemes = "Bearer")]
-        public async Task<ActionResult<List<DomainDto>>> Index([FromQuery] string projectStatus = null)
+        public async Task<ActionResult<List<DomainDto2>>> Index([FromQuery] string projectStatus = null)
         {
             var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
             var claimsPrincipal = _tokenHelper.ValidateToken(_configuration["Jwt:Key"], authHeader);
@@ -77,7 +77,7 @@ namespace MobitekCRMV2.Controllers
 
             domains = _domainService.FilterDomainsByStatus(domains, projectStatus);
 
-            var domainDtos = domains.Select(domain => new DomainDto
+            var domainDtos = domains.Select(domain => new DomainDto2
             {
                 Id = domain.Id,
                 Name = domain.Name,

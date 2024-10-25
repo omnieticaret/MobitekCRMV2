@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MobitekCRMV2.Dto.Dtos.UserDto
+namespace MobitekCRMV2.Dto.Dtos.UsersDtos
 {
-    public class UserListDto
+    public class UserListDto2
     {
         public string Id { get; set; }
         public string UserName { get; set; }
@@ -20,7 +20,7 @@ namespace MobitekCRMV2.Dto.Dtos.UserDto
 
     public class UsersResponseDto
     {
-        public List<UserListDto> Users { get; set; }
+        public List<UserListDto2> Users { get; set; }
         public UserType UserType { get; set; }
         public string ErrorMessage { get; set; }
         public decimal TotalBudget { get; set; }

@@ -25,11 +25,11 @@ namespace MobitekCRMV2.Controllers
         }
 
         [HttpGet("getListPlatforms")]
-        public async Task<ActionResult<List<PlatformsListDto>>> GetListPlatforms()
+        public async Task<ActionResult<List<PlatformsListDto2>>> GetListPlatforms()
         {
             var platforms = await _platformRepository.GetAllAsync();
 
-            var allPlatformsViews = platforms.Select(x => new PlatformsListDto
+            var allPlatformsViews = platforms.Select(x => new PlatformsListDto2
             {
                 Id = x.Id,
                 Name = x.Name
@@ -38,7 +38,7 @@ namespace MobitekCRMV2.Controllers
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> Add(PlatformsListDto model)
+        public async Task<IActionResult> Add(PlatformsListDto2 model)
         {
             if (!ModelState.IsValid)
             {

@@ -1,11 +1,11 @@
-﻿using MobitekCRMV2.Entity.Entities;
+﻿using MobitekCRMV2.Dto.Dtos.UsersDto;
+using MobitekCRMV2.Entity.Entities;
 
 namespace MobitekCRMV2.Model.Models
 {
     public class AdminAssignRoleViewModel
     {
-        public User User { get; set; }
-
+        public UserDto User { get; set; }
 
         public List<string> RoleList { get; set; }
         public List<string> hasRoles { get; set; }

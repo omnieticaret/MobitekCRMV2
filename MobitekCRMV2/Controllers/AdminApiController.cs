@@ -65,89 +65,54 @@ namespace MobitekCRMV2.Controllers
             return Ok(model);
         }
 
-        [HttpGet("rolelist")]
-        public async Task<IActionResult> RoleList(string userType)
-        {
-            var model = new AdminRoleListModel();
-            var users = await _userRepository.Table.AsNoTracking().ToListAsync();
+      
 
-            model.UserList = new List<UserWithRoles>();
+        //[HttpGet("assignrole/{id}")]
+        //public async Task<IActionResult> AssignRole(string id)
+        //{
+        //    var user = await _userRepository.Table.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        //    if (user == null)
+        //    {
+        //        return NotFound($"User with ID {id} not found.");
+        //    }
 
-            foreach (var item in users)
-            {
-                var userWithRoles = new UserWithRoles
-                {
-                    User = item,
-                    Roles = (await _userManager.GetRolesAsync(item)).ToList()
-                };
-                model.UserList.Add(userWithRoles);
-            }
+        //    var roles = await _userManager.GetRolesAsync(user);
+        //    var roleList = _roleManager.Roles.Select(x => x.Name).ToList();
 
-            if (!string.IsNullOrEmpty(userType))
-            {
-                var userTypeEnum = _adminService.GetEnumFromName(userType);
-                model.UserList = model.UserList.Where(x => x.User.UserType == userTypeEnum).ToList();
-                model.userType = userTypeEnum.GetDisplayName();
-            }
-            else
-            {
-                model.UserList = model.UserList.Where(x => x.User.UserType != UserType.Customer
-                                                        && x.User.UserType != UserType.Editor
-                                                        && x.User.UserType != UserType.Writer).ToList();
-                model.userType = "Kullanıcılar";
-            }
+        //    var model = new AdminAssignRoleViewModel
+        //    {
+        //        User = user,
+        //        hasRoles = roles.ToList(),
+        //        RoleList = roleList
+        //    };
 
-            model.UserList = model.UserList.OrderBy(x => x.User.Status).ToList();
+        //    return Ok(model);
+        //}
 
-            return Ok(model); 
-        }
+        //[HttpPost("assignrole")]
+        //public async Task<IActionResult> AssignRole([FromBody] AssignRoleRequest request)
+        //{
+        //    var user = await _userRepository.Table.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.UserId);
+        //    if (user == null)
+        //    {
+        //        return NotFound($"User with ID {request.UserId} not found.");
+        //    }
 
-        [HttpGet("assignrole/{id}")]
-        public async Task<IActionResult> AssignRole(string id)
-        {
-            var user = await _userRepository.Table.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-            if (user == null)
-            {
-                return NotFound($"User with ID {id} not found.");
-            }
+        //    var roleList = _roleManager.Roles.Select(x => x.Name).ToList();
+        //    foreach (var role in roleList)
+        //    {
+        //        if (request.SelectedRoles.Contains(role))
+        //        {
+        //            await _userManager.AddToRoleAsync(user, role);
+        //        }
+        //        else
+        //        {
+        //            await _userManager.RemoveFromRoleAsync(user, role);
+        //        }
+        //    }
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var roleList = _roleManager.Roles.Select(x => x.Name).ToList();
-
-            var model = new AdminAssignRoleViewModel
-            {
-                User = user,
-                hasRoles = roles.ToList(),
-                RoleList = roleList
-            };
-
-            return Ok(model);
-        }
-
-        [HttpPost("assignrole")]
-        public async Task<IActionResult> AssignRole([FromBody] AssignRoleRequest request)
-        {
-            var user = await _userRepository.Table.AsNoTracking().FirstOrDefaultAsync(x => x.Id == request.UserId);
-            if (user == null)
-            {
-                return NotFound($"User with ID {request.UserId} not found.");
-            }
-
-            var roleList = _roleManager.Roles.Select(x => x.Name).ToList();
-            foreach (var role in roleList)
-            {
-                if (request.SelectedRoles.Contains(role))
-                {
-                    await _userManager.AddToRoleAsync(user, role);
-                }
-                else
-                {
-                    await _userManager.RemoveFromRoleAsync(user, role);
-                }
-            }
-
-            return Ok(new { message = "Roles updated successfully." });
-        }
+        //    return Ok(new { message = "Roles updated successfully." });
+        //}
 
         [HttpGet("setkeywordvalue")]
         public IActionResult SetKeywordValue()
@@ -213,10 +178,6 @@ namespace MobitekCRMV2.Controllers
             return Ok(new { message = "Todo management endpoint is available." });
         }
     }
-    public class AssignRoleRequest
-    {
-        public string UserId { get; set; }
-        public List<string> SelectedRoles { get; set; }
-    }
+ 
 }
 

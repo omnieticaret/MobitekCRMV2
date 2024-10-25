@@ -6,7 +6,7 @@ using MobitekCRMV2.Authentication;
 using MobitekCRMV2.DataAccess.Context;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
-using MobitekCRMV2.Dto.Dtos.CustomerDto;
+using MobitekCRMV2.Dto.Dtos.CustomersDto;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using Newtonsoft.Json;
@@ -63,10 +63,10 @@ namespace MobitekCRMV2.Controllers
                 customerList = await customers.ToListAsync();
             }
 
-            List<CustomerListDto> viewModel = new List<CustomerListDto>();
+            List<CustomerListDto2> viewModel = new List<CustomerListDto2>();
             foreach (var customer in customerList)
             {
-                var customerListDto = new CustomerListDto
+                var customerListDto = new CustomerListDto2
 
                 {
                     Id = customer.Id,
@@ -144,7 +144,7 @@ namespace MobitekCRMV2.Controllers
                 CompanyPhone = customer.CompanyPhone,
                 CompanyOfficialWebsite = customer.CompanyOfficialWebsite,
                 CustomerType = customer.CustomerType.ToString(),
-                Projects = customer.Projects.Select(p => new ProjectDto
+                Projects = customer.Projects.Select(p => new ProjectDto11
                 {
                     Id = p.Id,
                     ProjectType = p.ProjectType.ToString(),

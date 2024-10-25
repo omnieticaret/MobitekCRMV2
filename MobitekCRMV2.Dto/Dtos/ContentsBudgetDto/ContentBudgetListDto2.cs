@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MobitekCRMV2.Dto.Dtos.ContentBudgetDto
+namespace MobitekCRMV2.Dto.Dtos.ContentsBudgetDto
 {
-    public class ContentBudgetListDto
+    public class ContentBudgetListDto2
     {
         public string Id { get; set; }
         public string ProjectId { get; set; }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MobitekCRMV2.Dto.Dtos
 {
-    public class NewsSiteDto
+    public class NewsSiteDto2
     {
         public string Id { get; set; }
         public string Name { get; set; }

@@ -1,3 +1,4 @@
+﻿using AutoMapper;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -6,6 +7,7 @@ using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
 using MobitekCRMV2.Extensions;
 using MobitekCRMV2.Jobs;
+using MobitekCRMV2.Mapping;
 using MobitekCRMV2.Middlewares;
 using MobitekCRMV2.Model.Models;
 using System.Text;
@@ -15,6 +17,10 @@ var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json")
     .Build();
+var config = new MapperConfiguration(cfg => {
+    cfg.AddProfile<AutoMapperProfile>();
+});
+
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -23,6 +29,8 @@ builder.Services.AddScoped<CustomReader>();
 builder.Services.AddScoped<SpaceSerpJob>();
 builder.Services.AddScoped<KeywordJsonModel>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 builder.Services.AddCors(options =>
 {
@@ -71,7 +79,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Use CORS before other middlewares
 app.UseCors("AllowLocalhost3000");
 
 app.UseRobotsTxt(app.Environment);

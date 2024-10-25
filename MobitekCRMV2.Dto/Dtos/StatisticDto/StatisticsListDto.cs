@@ -9,7 +9,7 @@ namespace MobitekCRMV2.Dto.Dtos.StatisticDto
     public class StatisticsListDto
     {
         public FilterDto FilterModel { get; set; }
-        public List<UserDto> ExpertList { get; set; }
+        public List<UserDto11> ExpertList { get; set; }
         public List<DataModelDto> DataList { get; set; } = new List<DataModelDto>(); 
     }
 
@@ -19,7 +19,7 @@ namespace MobitekCRMV2.Dto.Dtos.StatisticDto
         public string ExpertName { get; set; }
     }
 
-    public class UserDto
+    public class UserDto11
     {
         public string Id { get; set; }
         public string UserName { get; set; }

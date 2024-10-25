@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Context;
-using MobitekCRMV2.Dto.Dtos.ContentBudgetDto;
-using MobitekCRMV2.Dto.Dtos.CustomerDto;
+using MobitekCRMV2.Dto.Dtos.ContentsBudgetDto;
+using MobitekCRMV2.Dto.Dtos.CustomersDto;
 using MobitekCRMV2.Entity.Entities;
 using Newtonsoft.Json;
 using System.Security.Claims;
@@ -35,14 +35,14 @@ namespace MobitekCRMV2.Controllers
                 projects = projects.Where(x => x.Expert?.UserName == userName).ToList();
             }
 
-            List<ContentBudgetListDto> viewModel = new List<ContentBudgetListDto>();
+            List<ContentBudgetListDto2> viewModel = new List<ContentBudgetListDto2>();
 
             foreach (var project in projects)
             {
                 var contentSpend = await _contentBudgetService.GetMonthlyContentBudgetTotalCost(project.Id);
                 var backlinkSpend = await _contentBudgetService.GetMonthlyBacklinkBudgetTotalCost(project.Id);
 
-                var contentBugdetListdto = new ContentBudgetListDto
+                var contentBugdetListdto = new ContentBudgetListDto2
                 {
                     ProjectId = project.Id,
                     ProjectName = project.Url,

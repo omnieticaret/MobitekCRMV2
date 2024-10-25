@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -8,9 +9,11 @@ using MobitekCRMV2.Authentication;
 using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
-using MobitekCRMV2.Dto.Dtos.ProjectDto;
+using MobitekCRMV2.Dto.Dtos.ProjectsDto;
 using MobitekCRMV2.Dto.Dtos.UserDto;
-using MobitekCRMV2.Dto.Dtos.UserDto.UserDto;
+using MobitekCRMV2.Dto.Dtos.UserDto.UsersDto;
+using MobitekCRMV2.Dto.Dtos.UsersDto;
+using MobitekCRMV2.Dto.Dtos.UsersDtos;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Model.Models;
@@ -27,6 +30,7 @@ namespace MobitekCRMV2.Controllers
     {
         private readonly IRepository<User> _userRepository;
         private UserManager<User> _userManager;
+        private RoleManager<Role> _roleManager;
         private SignInManager<User> _signInManager;
 
         private readonly IAuthService _authService;
@@ -38,8 +42,10 @@ namespace MobitekCRMV2.Controllers
         private readonly PasswordService _passwordService;
         private readonly TokenHelper _tokenHelper;
         private readonly IConfiguration _configuration;
+        private readonly AdminService _adminService;
+        private readonly IMapper _mapper;
 
-        public UsersApiController(IRepository<Project> projectRepository, UserManager<User> userManager, SignInManager<User> signInManager, IRepository<User> userRepository, IUnitOfWork unitOfWork, IRepository<UserInfo> userInfoRepository, IRepository<NewsSite> newsSiteRepository, IRepository<Customer> customerRepository, PasswordService passwordService = null, IAuthService authService = null, TokenHelper tokenHelper = null, IConfiguration configuration = null)
+        public UsersApiController(IRepository<Project> projectRepository, UserManager<User> userManager, SignInManager<User> signInManager, IRepository<User> userRepository, IUnitOfWork unitOfWork, IRepository<UserInfo> userInfoRepository, IRepository<NewsSite> newsSiteRepository, IRepository<Customer> customerRepository, PasswordService passwordService = null, IAuthService authService = null, TokenHelper tokenHelper = null, IConfiguration configuration = null, AdminService adminService = null, IMapper mapper = null, RoleManager<Role> roleManager = null)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -54,6 +60,9 @@ namespace MobitekCRMV2.Controllers
             _authService = authService;
             _tokenHelper = tokenHelper;
             _configuration = configuration;
+            _adminService = adminService;
+            _mapper = mapper;
+            _roleManager = roleManager;
         }
         [HttpGet("index")]
 
@@ -79,7 +88,7 @@ namespace MobitekCRMV2.Controllers
                         .ToListAsync();
                 }
 
-                var userDtos = users.Select(u => new UserListDto
+                var userDtos = users.Select(u => new UserListDto2
                 {
                     Id = u.Id,
                     UserName = u.UserName,
@@ -230,7 +239,7 @@ namespace MobitekCRMV2.Controllers
                 PhoneNumber = user.PhoneNumber,
                 Status = user.Status.ToString(),
                 UserType = user.UserType.ToString(),
-                ExpertProjects = user.ExpertProjects.Select(project => new ProjectDetailDto2
+                ExpertProjects = user.ExpertProjects.Select(project => new ProjectDetailDto11
                 {
                     ProjectId = project.Id,
                     ProjectUrl = project.Url,
@@ -240,6 +249,111 @@ namespace MobitekCRMV2.Controllers
             };
 
             return Ok(userDetailDto);
+        }
+
+        [HttpGet("roleList")]
+        public async Task<IActionResult> GetRoleList(string? userType = null)
+        {
+            var users = await _userRepository.Table.AsNoTracking().ToListAsync();
+            var userSummaries = new List<UserSummaryDto>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                var userSummary = new UserSummaryDto
+                {
+                    Id = user.Id.ToString(),
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    Roles = roles.ToList(),
+                    UserType = user.UserType,
+                    Department = user.Department,
+                    Status = user.Status
+                };
+
+                userSummaries.Add(userSummary);
+            }
+            if (!string.IsNullOrEmpty(userType))
+            {
+                var userTypeEnum = _adminService.GetEnumFromName(userType);
+                userSummaries = userSummaries
+                    .Where(x => x.UserType == userTypeEnum)
+                    .ToList();
+            }
+            else
+            {
+                userSummaries = userSummaries
+                    .Where(x => x.UserType != UserType.Customer && x.UserType != UserType.Editor && x.UserType != UserType.Writer)
+                    .ToList();
+            }
+
+            userSummaries = userSummaries.OrderBy(x => x.Status).ToList();
+            var totalCount = userSummaries.Count;
+
+            var result = new UserListDto
+            {
+                Users = userSummaries,
+                TotalCount = totalCount
+            };
+
+            return Ok(result);
+        }
+
+
+
+        [HttpGet("assignRole/{id}")]
+        public async Task<IActionResult> AssignRole(string id)
+        {
+            var user = await _userRepository.Table.FirstOrDefaultAsync(x => x.Id == id);
+            if (user == null)
+                return NotFound("User not found.");
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var roleList = await _roleManager.Roles.Select(x => x.Name).ToListAsync();
+
+
+            var model = new AdminAssignRoleViewModel
+            {
+                User = _mapper.Map<UserDto>(user),
+                hasRoles = roles.ToList(),
+                RoleList = roleList
+            };
+
+            return Ok(model);
+        }
+
+        [HttpPost("assignrole")]
+        public async Task<IActionResult> AssignRole([FromBody] AssignRoleRequest request)
+        {
+            // User'ı UserManager üzerinden al
+            var user = await _userManager.FindByIdAsync(request.UserId.ToString());
+            if (user == null)
+            {
+                return NotFound($"User with ID {request.UserId} not found.");
+            }
+
+            // Mevcut rolleri al
+            var currentRoles = await _userManager.GetRolesAsync(user);
+
+            // Tüm rolleri al
+            var roleList = _roleManager.Roles.Select(x => x.Name).ToList();
+
+            // Kaldırılması gereken rolleri bul ve kaldır
+            var rolesToRemove = currentRoles.Where(r => !request.SelectedRoles.Contains(r));
+            if (rolesToRemove.Any())
+            {
+                await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+            }
+
+            // Eklenmesi gereken rolleri bul ve ekle
+            var rolesToAdd = request.SelectedRoles.Where(r => !currentRoles.Contains(r));
+            if (rolesToAdd.Any())
+            {
+                await _userManager.AddToRolesAsync(user, rolesToAdd);
+            }
+
+            return Ok(new { message = "Roles updated successfully." });
         }
 
         private string CalculateDuration(DateTime startDate)
@@ -263,9 +377,13 @@ namespace MobitekCRMV2.Controllers
 
             return myString;
         }
-
+        public class AssignRoleRequest
+        {
+            public string UserId { get; set; }
+            public List<string> SelectedRoles { get; set; }
+        }
     }
-  
+
 
 
 }

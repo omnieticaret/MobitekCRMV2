@@ -1,4 +1,6 @@
-﻿using DocumentFormat.OpenXml.Presentation;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using DocumentFormat.OpenXml.Presentation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,12 +10,11 @@ using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Context;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
-using MobitekCRMV2.Dto.Dtos;
-using MobitekCRMV2.Dto.Dtos.CustomerDto;
+using MobitekCRMV2.Dto.Dtos.CustomersDto;
 using MobitekCRMV2.Dto.Dtos.PlatformsDto;
-using MobitekCRMV2.Dto.Dtos.ProjectDto;
+using MobitekCRMV2.Dto.Dtos.ProjectsDto;
 using MobitekCRMV2.Dto.Dtos.StatisticDto;
-using MobitekCRMV2.Dto.Dtos.UserDto;
+using MobitekCRMV2.Dto.Dtos.UsersDtos;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Extensions;
@@ -48,12 +49,13 @@ namespace MobitekCRMV2.Controllers
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
         private readonly TokenHelper _tokenHelper;
+        private readonly IMapper _mapper;
 
 
         public ProjectsApiController(IRepository<Project> projectRepository, IRepository<Keyword> keywordRepository,
             IRepository<Platform> platformRepository, IUnitOfWork unitOfWork, UserManager<User> userManager, IRepository<Customer> customerRepository,
             IRepository<BackLink> backlinkrepository, IRepository<KeywordInfo> keywordInfoRepository, IRepository<KeywordValue> keywordvalue,
-            SpaceSerpJob spaceSerpJob, CreateTodos createTodos, CRMDbContext context, ProjectsService projectsService, BacklinksService backlinksService, HttpClient httpClient = null, IConfiguration configuration = null, TokenHelper tokenHelper = null)
+            SpaceSerpJob spaceSerpJob, CreateTodos createTodos, CRMDbContext context, ProjectsService projectsService, BacklinksService backlinksService, HttpClient httpClient = null, IConfiguration configuration = null, TokenHelper tokenHelper = null, IMapper mapper = null)
         {
             _projectRepository = projectRepository;
             _keywordRepository = keywordRepository;
@@ -72,6 +74,7 @@ namespace MobitekCRMV2.Controllers
             _httpClient = httpClient;
             _configuration = configuration;
             _tokenHelper = tokenHelper;
+            _mapper = mapper;
         }
         #endregion
 
@@ -88,7 +91,6 @@ namespace MobitekCRMV2.Controllers
                 .Include(x => x.Keywords)
                 .Include(x => x.Customer).ThenInclude(x => x.CustomerRepresentative);
 
-            // Roller bazında sorgu filtreleme
             if (!(userRole == "admin" || userRole == "viewer"))
             {
                 if (userRole == "customer")
@@ -120,10 +122,10 @@ namespace MobitekCRMV2.Controllers
                     .ToListAsync();
             }
 
-            List<ProjectListDto> viewModel = new List<ProjectListDto>();
+            List<ProjectListDto2> viewModel = new List<ProjectListDto2>();
             foreach (var project in projects)
             {
-                var projectDto = new ProjectListDto
+                var projectDto = new ProjectListDto2
                 {
                     Id = project.Id,
                     ProjectType = project.ProjectType.ToString(),
@@ -250,7 +252,7 @@ namespace MobitekCRMV2.Controllers
                 FilterModel = new FilterDto(),
                 ExpertList = await _context.Users
                     .Where(x => x.Status == Status.Active && x.UserType == UserType.SeoExpert)
-                    .Select(u => new UserDto { Id = u.Id, UserName = u.UserName })
+                    .Select(u => new UserDto11 { Id = u.Id, UserName = u.UserName })
                     .ToListAsync()
             };
 
@@ -349,7 +351,7 @@ namespace MobitekCRMV2.Controllers
                     .Where(x => x.Domain.Project.Id == id)
                     .OrderByDescending(x => x.CreatedAt)
                     .Take(20)
-                    .Select(bl => new BackLinkDto
+                    .Select(bl => new BackLinkDto11
                     {
                         Id = bl.Id,
                         // Add other properties as needed
@@ -362,20 +364,20 @@ namespace MobitekCRMV2.Controllers
                 model.DomainId = (await _context.Domains.FirstOrDefaultAsync(x => x.Project.Id == id))?.Id;
             }
 
-            model.Users = await _userManager.Users.Select(u => new UserListDto
+            model.Users = await _userManager.Users.Select(u => new UserListDto2
             {
                 Id = u.Id,
                 UserName = u.UserName,
                 Email = u.Email
             }).ToListAsync();
 
-            model.Platforms = await _platformRepository.Table.AsNoTracking().Select(p => new PlatformsListDto
+            model.Platforms = await _platformRepository.Table.AsNoTracking().Select(p => new PlatformsListDto2
             {
                 Id = p.Id,
                 Name = p.Name
             }).ToListAsync();
 
-            model.Customers = await _customerRepository.Table.AsNoTracking().Select(c => new CustomerListDto
+            model.Customers = await _customerRepository.Table.AsNoTracking().Select(c => new CustomerListDto2
             {
                 Id = c.Id,
                 // Add other properties as needed
@@ -407,7 +409,7 @@ namespace MobitekCRMV2.Controllers
 
             model.CountryCodeList = _projectsService.StringToList(project.CountryCode);
 
-            model.Project = new ProjectListDto
+            model.Project = new ProjectListDto2
             {
                 Id = project.Id,
                 ProjectType = project.ProjectType.ToString(),
@@ -431,12 +433,12 @@ namespace MobitekCRMV2.Controllers
                 Status = project.Status.ToString(),
             };
 
-            model.Keywords = keywords.Select(k => new KeywordDto
+            model.Keywords = keywords.Select(k => new KeywordDto11
             {
                 Id = k.Id,
                 Keyword = k.KeywordName,
                 IsStarred = k.IsStarred,
-                KeywordValues = k.KeywordValues.Select(kv => new KeywordValueDto
+                KeywordValues = k.KeywordValues.Select(kv => new KeywordValueDto11
                 {
                     Id = kv.Id,
                     CountryCode = kv.CountryCode,
@@ -447,9 +449,9 @@ namespace MobitekCRMV2.Controllers
 
             if (project.Customer != null)
             {
-                model.Customers = new List<CustomerListDto>
+                model.Customers = new List<CustomerListDto2>
         {
-            new CustomerListDto
+            new CustomerListDto2
             {
                 Id = project.Customer.Id,
                 CompanyName = project.Customer.CompanyName,
@@ -465,11 +467,66 @@ namespace MobitekCRMV2.Controllers
             }
             else
             {
-                model.Customers = new List<CustomerListDto>();
+                model.Customers = new List<CustomerListDto2>();
             }
 
             return model;
         }
 
+
+        [HttpGet("dashboard")]
+        public async Task<ActionResult<DashboardProjectsDto>> GetDashboardProjects()
+        {
+            var userName = User.Identity.Name;
+            var isAdmin = User.IsInRole("admin");
+
+            var dueThisWeekQuery = _projectRepository.Table
+                .AsNoTracking()
+                .Include(x => x.Expert)
+                .Where(x => x.ReportDate < DateTime.Today.AddDays(7)
+                    && x.ReportDate >= DateTime.Today
+                    && x.ProjectType == ProjectType.Seo
+                    && x.Status == Status.Active);
+
+            var pastProjectsQuery = _projectRepository.Table
+                .AsNoTracking()
+                .Include(x => x.Expert)
+                .Where(x => x.ReportDate < DateTime.Today
+                    && x.ProjectType == ProjectType.Seo
+                    && x.Status == Status.Active);
+
+            if (!isAdmin)
+            {
+                dueThisWeekQuery = dueThisWeekQuery.Where(x => x.Expert.UserName == userName);
+                pastProjectsQuery = pastProjectsQuery.Where(x => x.Expert.UserName == userName);
+            }
+            var dueThisWeekProjects = await dueThisWeekQuery
+                .ProjectTo<ProjectSummaryDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            var pastProjects = await pastProjectsQuery
+                .ProjectTo<ProjectSummaryDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            var dueThisWeekView = await dueThisWeekQuery
+                .Where(x => x.Expert.UserName != userName)
+                .ProjectTo<ProjectSummaryDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            var pastView = await pastProjectsQuery
+                .Where(x => x.Expert.UserName != userName)
+                .ProjectTo<ProjectSummaryDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            var response = new DashboardProjectsDto
+            {
+                ThisWeekProjects = dueThisWeekProjects,
+                PastProjects = pastProjects,
+                DueThisWeekView = dueThisWeekView,
+                PastView = pastView
+            };
+
+            return Ok(response);
+        }
     }
 }
