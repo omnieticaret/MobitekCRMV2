@@ -1,5 +1,5 @@
 ﻿using MobitekCRMV2.Dto.Dtos.ProjectsDto;
-using MobitekCRMV2.Dto.Dtos.UserDto;
+using MobitekCRMV2.Dto.Dtos.UsersDto;
 using MobitekCRMV2.Dto.Dtos.UsersDto;
 using MobitekCRMV2.Entity.Enums;
 

@@ -1,6 +1,8 @@
-﻿using MobitekCRMV2.Dto.Dtos.BackLinkDto;
+﻿using MobitekCRMV2.Dto.Dtos;
+using MobitekCRMV2.Dto.Dtos.BackLinskDto;
 using MobitekCRMV2.Dto.Dtos.PromotionsDto;
 using MobitekCRMV2.Dto.Dtos.UsersDto;
+using MobitekCRMV2.Entity.Enums;
 
 namespace MobitekCRMV2.Dto.Dtos.NewsSitesDto
 {
@@ -37,7 +39,7 @@ namespace MobitekCRMV2.Dto.Dtos.NewsSitesDto
 
     public class NewsSiteListDto
     {
-        public List<NewsSiteSummaryDto> NewsSites { get; set; }
+        public List<NewsSiteDto> NewsSites { get; set; }
         public int TotalCount { get; set; }
         public Dictionary<string, double> AverageMetrics { get; set; }
     }
@@ -48,6 +50,8 @@ namespace MobitekCRMV2.Dto.Dtos.NewsSitesDto
         public string Name { get; set; }
         public int Price { get; set; }
         public int DAScore { get; set; }
+        public string Email { get; set; }
+        public Status Status { get; set; }
         public int PAScore { get; set; }
         public string EditorMail { get; set; }
         public string LastUpdateDate { get; set; }

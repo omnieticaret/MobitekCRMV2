@@ -10,6 +10,7 @@ using MobitekCRMV2.Jobs;
 using MobitekCRMV2.Mapping;
 using MobitekCRMV2.Middlewares;
 using MobitekCRMV2.Model.Models;
+using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,9 +18,7 @@ var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json")
     .Build();
-var config = new MapperConfiguration(cfg => {
-    cfg.AddProfile<AutoMapperProfile>();
-});
+builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
@@ -30,7 +29,7 @@ builder.Services.AddScoped<SpaceSerpJob>();
 builder.Services.AddScoped<KeywordJsonModel>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-builder.Services.AddAutoMapper(typeof(Program).Assembly);
+builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 builder.Services.AddCors(options =>
 {
@@ -42,7 +41,13 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
-
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -85,10 +90,10 @@ app.UseRobotsTxt(app.Environment);
 
 app.UseMiddleware<IPControlMiddleware>();
 
-app.UseHttpsRedirection();
-
+app.UseHttpsRedirection(); 
+app.UseSession();
 app.UseAuthorization();
-app.UseAuthentication();    
+app.UseAuthentication();
 app.MapControllers();
 
 app.Run();

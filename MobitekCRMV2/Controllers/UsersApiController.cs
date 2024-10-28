@@ -10,8 +10,6 @@ using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
 using MobitekCRMV2.Dto.Dtos.ProjectsDto;
-using MobitekCRMV2.Dto.Dtos.UserDto;
-using MobitekCRMV2.Dto.Dtos.UserDto.UsersDto;
 using MobitekCRMV2.Dto.Dtos.UsersDto;
 using MobitekCRMV2.Dto.Dtos.UsersDtos;
 using MobitekCRMV2.Entity.Entities;
@@ -65,7 +63,6 @@ namespace MobitekCRMV2.Controllers
             _roleManager = roleManager;
         }
         [HttpGet("index")]
-
         public async Task<ActionResult<UsersResponseDto>> Index([FromQuery] UserType userType, [FromQuery] bool isAll, [FromQuery] string status)
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
@@ -253,7 +250,7 @@ namespace MobitekCRMV2.Controllers
 
         [HttpGet("roleList")]
         public async Task<IActionResult> GetRoleList(string? userType = null)
-        {
+         {
             var users = await _userRepository.Table.AsNoTracking().ToListAsync();
             var userSummaries = new List<UserSummaryDto>();
 
@@ -326,27 +323,20 @@ namespace MobitekCRMV2.Controllers
         [HttpPost("assignrole")]
         public async Task<IActionResult> AssignRole([FromBody] AssignRoleRequest request)
         {
-            // User'ı UserManager üzerinden al
             var user = await _userManager.FindByIdAsync(request.UserId.ToString());
             if (user == null)
             {
                 return NotFound($"User with ID {request.UserId} not found.");
             }
-
-            // Mevcut rolleri al
             var currentRoles = await _userManager.GetRolesAsync(user);
-
-            // Tüm rolleri al
             var roleList = _roleManager.Roles.Select(x => x.Name).ToList();
 
-            // Kaldırılması gereken rolleri bul ve kaldır
             var rolesToRemove = currentRoles.Where(r => !request.SelectedRoles.Contains(r));
             if (rolesToRemove.Any())
             {
                 await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
             }
 
-            // Eklenmesi gereken rolleri bul ve ekle
             var rolesToAdd = request.SelectedRoles.Where(r => !currentRoles.Contains(r));
             if (rolesToAdd.Any())
             {

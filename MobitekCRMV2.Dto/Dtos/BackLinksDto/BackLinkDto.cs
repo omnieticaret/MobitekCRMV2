@@ -1,7 +1,7 @@
 ﻿using MobitekCRMV2.Dto.Dtos.DomainDto;
 using MobitekCRMV2.Dto.Dtos.NewsSitesDto;
 
-namespace MobitekCRMV2.Dto.Dtos.BackLinkDto
+namespace MobitekCRMV2.Dto.Dtos.BackLinskDto
 {
     public class BackLinkDto
     {

@@ -1,5 +1,4 @@
-﻿using MobitekCRMV2.Dto.Dtos.UserDto;
-using MobitekCRMV2.Dto.Dtos.UsersDto;
+﻿using MobitekCRMV2.Dto.Dtos.UsersDto;
 
 namespace MobitekCRMV2.Dto.Dtos.UserInfoDto
 {

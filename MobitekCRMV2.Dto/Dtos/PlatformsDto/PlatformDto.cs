@@ -1,7 +1,7 @@
 ﻿using MobitekCRMV2.Dto.Dtos.ProjectsDto;
 using MobitekCRMV2.Entity.Enums;
 
-namespace MobitekCRMV2.Dto.Dtos.PlatformDto
+namespace MobitekCRMV2.Dto.Dtos.PlatformsDto
 {
     public class PlatformDto
     {

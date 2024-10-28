@@ -10,11 +10,13 @@ using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Context;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
+using MobitekCRMV2.Dto.Dtos.BackLinskDto;
 using MobitekCRMV2.Dto.Dtos.CustomersDto;
+using MobitekCRMV2.Dto.Dtos.KeywordsDto;
 using MobitekCRMV2.Dto.Dtos.PlatformsDto;
 using MobitekCRMV2.Dto.Dtos.ProjectsDto;
 using MobitekCRMV2.Dto.Dtos.StatisticDto;
-using MobitekCRMV2.Dto.Dtos.UsersDtos;
+using MobitekCRMV2.Dto.Dtos.UsersDto;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Extensions;
@@ -315,163 +317,242 @@ namespace MobitekCRMV2.Controllers
             return Ok(statisticsDto);
         }
 
-
-
-
         [HttpGet("detail/{id}")]
         public async Task<ActionResult<ProjectDetailDto>> GetProjectDetail(string id, string? returnType = null, string? type = null, string? starFilter = null, string? countryCode = null)
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == userName);
-
+            if (string.IsNullOrEmpty(starFilter) && string.IsNullOrEmpty(countryCode))
+            {
+                HttpContext.Session.Remove("StarFilter");
+                HttpContext.Session.Remove("CountryCode");
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(starFilter)) HttpContext.Session.SetString("StarFilter", starFilter);
+                else starFilter = HttpContext.Session.GetString("StarFilter");
+                if (!string.IsNullOrEmpty(countryCode)) HttpContext.Session.SetString("CountryCode", countryCode);
+                else countryCode = HttpContext.Session.GetString("CountryCode");
+            }
             var project = await _projectRepository.Table.AsNoTracking().IncludeAll().FirstOrDefaultAsync(x => x.Id == id);
-            if (project == null)
+            if (id == null || project == null)
             {
-                return NotFound("Project not found");
+                return NotFound(new { ErrorMessage = "Project not found" });
             }
 
-            if (!(User.IsInRole("admin") || User.IsInRole("viewer")))
-            {
-                if (!User.IsInRole("sm_expert") || project.ProjectType != ProjectType.Sm)
-                {
-                    if (!(project.Expert?.UserName == User.Identity?.Name) && !(User.IsInRole("customer") && project.Customer?.CustomerRepresentativeId == user.Id))
-                    {
-                        return Forbid("You can only view details of your own projects");
-                    }
-                }
-            }
-
-            var model = new ProjectDetailDto();
+            var projectDto = _mapper.Map<ProjectDto>(project);
+            projectDto.ReturnType = returnType;
 
             if (type == "backlink")
             {
-                model.BackLinks = await _backlinkRepository.Table
-                    .AsNoTracking()
-                    .Where(x => x.Domain.Project.Id == id)
-                    .OrderByDescending(x => x.CreatedAt)
-                    .Take(20)
-                    .Select(bl => new BackLinkDto11
-                    {
-                        Id = bl.Id,
-                        // Add other properties as needed
-                    })
-                    .ToListAsync();
+                var backlinks = _backlinkRepository.Table.AsNoTracking()
+                                .Where(x => x.Domain.Project.Id == id)
+                                .OrderByDescending(x => x.CreatedAt)
+                                .Take(20)
+                                .ToList();
+                projectDto.BackLinks = _mapper.Map<List<BackLinkDto>>(backlinks);
             }
 
             if (project.ProjectType == ProjectType.Seo)
-            {
-                model.DomainId = (await _context.Domains.FirstOrDefaultAsync(x => x.Project.Id == id))?.Id;
-            }
+                projectDto.DomainId = _context.Domains.FirstOrDefault(x => x.Project.Id == id)?.Id;
 
-            model.Users = await _userManager.Users.Select(u => new UserListDto2
-            {
-                Id = u.Id,
-                UserName = u.UserName,
-                Email = u.Email
-            }).ToListAsync();
-
-            model.Platforms = await _platformRepository.Table.AsNoTracking().Select(p => new PlatformsListDto2
-            {
-                Id = p.Id,
-                Name = p.Name
-            }).ToListAsync();
-
-            model.Customers = await _customerRepository.Table.AsNoTracking().Select(c => new CustomerListDto2
-            {
-                Id = c.Id,
-                // Add other properties as needed
-            }).ToListAsync();
+            projectDto.Users = _mapper.Map<List<UserDto>>(_userManager.Users.ToList());
+            projectDto.Platforms = _mapper.Map<List<PlatformDto>>(await _platformRepository.Table.AsNoTracking().ToListAsync());
+            projectDto.Customers = _mapper.Map<List<CustomerDto>>(await _customerRepository.Table.AsNoTracking().ToListAsync());
 
             if (countryCode == null)
             {
                 var codeList = _projectsService.StringToList(project.CountryCode);
                 countryCode = codeList.Count == 1 ? project.CountryCode : codeList[0];
             }
-
-            model.CountryCodeFilter = countryCode;
+            projectDto.CountryCodeFilter = countryCode;
 
             var keywords = await _keywordRepository.Table.AsNoTracking()
-                .Where(x => x.ProjectId == id)
-                .Include(x => x.KeywordValues.Where(kv => kv.CountryCode == countryCode))
-                .ToListAsync();
+                            .Where(x => x.ProjectId == id)
+                            .Include(x => x.KeywordValues.Where(kv => kv.CountryCode == countryCode))
+                            .ToListAsync();
+            projectDto.Keywords = _mapper.Map<List<KeywordSummaryDto>>(keywords);
 
-            if (starFilter != null)
+            if (!string.IsNullOrEmpty(starFilter))
             {
-                keywords = starFilter switch
+                projectDto.Keywords = starFilter == "star" ?
+                                    projectDto.Keywords.Where(x => x.IsStarred).ToList() :
+                                    projectDto.Keywords.Where(x => !x.IsStarred).ToList();
+                projectDto.IsStarredFilter = starFilter;
+            }
+            projectDto.CountryCodeList = _projectsService.StringToList(project.CountryCode);
+
+            if (!(User.IsInRole("admin") || User.IsInRole("viewer")))
+            {
+                if (!User.IsInRole("sm_expert") || project.ProjectType != ProjectType.Sm)
                 {
-                    "star" => keywords.Where(x => x.IsStarred).ToList(),
-                    "unstar" => keywords.Where(x => !x.IsStarred).ToList(),
-                    _ => keywords
-                };
-                model.IsStarredFilter = starFilter;
+                    if (!(project.Expert?.UserName == User.Identity.Name) &&
+                        !(User.IsInRole("customer") && project.Customer?.CustomerRepresentativeId == user.Id))
+                    {
+                        return Unauthorized(new { ErrorMessage = "You can only view your own projects' details" });
+                    }
+                }
             }
 
-            model.CountryCodeList = _projectsService.StringToList(project.CountryCode);
-
-            model.Project = new ProjectListDto2
-            {
-                Id = project.Id,
-                ProjectType = project.ProjectType.ToString(),
-                ExpertId = project.ExpertId,
-                CustomerId = project.CustomerId,
-                ReportMail = project.ReportMail,
-                Phone = project.Phone,
-                Budget = project.Budget,
-                ContractKeywordCount = project.ContractKeywordCount,
-                Contract = project.Contract.ToString(),
-                StartDate = project.StartDate,
-                ReportDate = project.ReportDate,
-                MeetingDate = project.MeetingDate,
-                PacketInfo = project.PacketInfo,
-                DevelopmentStatus = project.DevelopmentStatus,
-                PlatformId = project.PlatformId,
-                ServerStatus = project.ServerStatus,
-                CountryCode = project.CountryCode,
-                AccessInfo = project.AccessInfo,
-                Note = project.Note,
-                Status = project.Status.ToString(),
-            };
-
-            model.Keywords = keywords.Select(k => new KeywordDto11
-            {
-                Id = k.Id,
-                Keyword = k.KeywordName,
-                IsStarred = k.IsStarred,
-                KeywordValues = k.KeywordValues.Select(kv => new KeywordValueDto11
-                {
-                    Id = kv.Id,
-                    CountryCode = kv.CountryCode,
-                    Position = kv.Position,
-                    Date = kv.CreatedDate.ToString("yyyy-MM-dd")
-                }).ToList()
-            }).ToList();
-
-            if (project.Customer != null)
-            {
-                model.Customers = new List<CustomerListDto2>
-        {
-            new CustomerListDto2
-            {
-                Id = project.Customer.Id,
-                CompanyName = project.Customer.CompanyName,
-                CompanyAddress = project.Customer.CompanyAddress,
-                CompanyEmail = project.Customer.CompanyEmail,
-                CompanyPhone = project.Customer.CompanyPhone,
-                CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
-                CustomerType = project.Customer.CustomerType.ToString(),
-                CustomerRepresentative = project.Customer.CustomerRepresentative?.UserName ?? "Unknown",
-                Projects = project.Customer.Projects?.ToString()
-            }
-        };
-            }
-            else
-            {
-                model.Customers = new List<CustomerListDto2>();
-            }
-
-            return model;
+            return Ok(projectDto);
         }
+
+
+        //[HttpGet("detail/{id}")]
+        //public async Task<ActionResult<ProjectDetailDto>> GetProjectDetail(string id, string? returnType = null, string? type = null, string? starFilter = null, string? countryCode = null)
+        //{
+        //    var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
+        //    var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
+        //    var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == userName);
+
+        //    var project = await _projectRepository.Table.AsNoTracking().IncludeAll().FirstOrDefaultAsync(x => x.Id == id);
+        //    if (project == null)
+        //    {
+        //        return NotFound("Project not found");
+        //    }
+
+        //    if (!(User.IsInRole("admin") || User.IsInRole("viewer")))
+        //    {
+        //        if (!User.IsInRole("sm_expert") || project.ProjectType != ProjectType.Sm)
+        //        {
+        //            if (!(project.Expert?.UserName == User.Identity?.Name) && !(User.IsInRole("customer") && project.Customer?.CustomerRepresentativeId == user.Id))
+        //            {
+        //                return Forbid("You can only view details of your own projects");
+        //            }
+        //        }
+        //    }
+
+        //    var model = new ProjectDetailDto();
+
+        //    if (type == "backlink")
+        //    {
+        //        model.BackLinks = await _backlinkRepository.Table
+        //            .AsNoTracking()
+        //            .Where(x => x.Domain.Project.Id == id)
+        //            .OrderByDescending(x => x.CreatedAt)
+        //            .Take(20)
+        //            .Select(bl => new BackLinkDto11
+        //            {
+        //                Id = bl.Id,
+        //                // Add other properties as needed
+        //            })
+        //            .ToListAsync();
+        //    }
+
+        //    if (project.ProjectType == ProjectType.Seo)
+        //    {
+        //        model.DomainId = (await _context.Domains.FirstOrDefaultAsync(x => x.Project.Id == id))?.Id;
+        //    }
+
+        //    model.Users = await _userManager.Users.Select(u => new UserListDto2
+        //    {
+        //        Id = u.Id,
+        //        UserName = u.UserName,
+        //        Email = u.Email
+        //    }).ToListAsync();
+
+        //    model.Platforms = await _platformRepository.Table.AsNoTracking().Select(p => new PlatformsListDto2
+        //    {
+        //        Id = p.Id,
+        //        Name = p.Name
+        //    }).ToListAsync();
+
+        //    model.Customers = await _customerRepository.Table.AsNoTracking().Select(c => new CustomerListDto2
+        //    {
+        //        Id = c.Id,
+        //        // Add other properties as needed
+        //    }).ToListAsync();
+
+        //    if (countryCode == null)
+        //    {
+        //        var codeList = _projectsService.StringToList(project.CountryCode);
+        //        countryCode = codeList.Count == 1 ? project.CountryCode : codeList[0];
+        //    }
+
+        //    model.CountryCodeFilter = countryCode;
+
+        //    var keywords = await _keywordRepository.Table.AsNoTracking()
+        //        .Where(x => x.ProjectId == id)
+        //        .Include(x => x.KeywordValues.Where(kv => kv.CountryCode == countryCode))
+        //        .ToListAsync();
+
+        //    if (starFilter != null)
+        //    {
+        //        keywords = starFilter switch
+        //        {
+        //            "star" => keywords.Where(x => x.IsStarred).ToList(),
+        //            "unstar" => keywords.Where(x => !x.IsStarred).ToList(),
+        //            _ => keywords
+        //        };
+        //        model.IsStarredFilter = starFilter;
+        //    }
+
+        //    model.CountryCodeList = _projectsService.StringToList(project.CountryCode);
+
+        //    model.Project = new ProjectListDto2
+        //    {
+        //        Id = project.Id,
+        //        ProjectType = project.ProjectType.ToString(),
+        //        ExpertId = project.ExpertId,
+        //        CustomerId = project.CustomerId,
+        //        ReportMail = project.ReportMail,
+        //        Phone = project.Phone,
+        //        Budget = project.Budget,
+        //        ContractKeywordCount = project.ContractKeywordCount,
+        //        Contract = project.Contract.ToString(),
+        //        StartDate = project.StartDate,
+        //        ReportDate = project.ReportDate,
+        //        MeetingDate = project.MeetingDate,
+        //        PacketInfo = project.PacketInfo,
+        //        DevelopmentStatus = project.DevelopmentStatus,
+        //        PlatformId = project.PlatformId,
+        //        ServerStatus = project.ServerStatus,
+        //        CountryCode = project.CountryCode,
+        //        AccessInfo = project.AccessInfo,
+        //        Note = project.Note,
+        //        Status = project.Status.ToString(),
+        //    };
+
+        //    model.Keywords = keywords.Select(k => new KeywordDto11
+        //    {
+        //        Id = k.Id,
+        //        Keyword = k.KeywordName,
+        //        IsStarred = k.IsStarred,
+        //        KeywordValues = k.KeywordValues.Select(kv => new KeywordValueDto11
+        //        {
+        //            Id = kv.Id,
+        //            CountryCode = kv.CountryCode,
+        //            Position = kv.Position,
+        //            Date = kv.CreatedDate.ToString("yyyy-MM-dd")
+        //        }).ToList()
+        //    }).ToList();
+
+        //    if (project.Customer != null)
+        //    {
+        //        model.Customers = new List<CustomerListDto2>
+        //{
+        //    new CustomerListDto2
+        //    {
+        //        Id = project.Customer.Id,
+        //        CompanyName = project.Customer.CompanyName,
+        //        CompanyAddress = project.Customer.CompanyAddress,
+        //        CompanyEmail = project.Customer.CompanyEmail,
+        //        CompanyPhone = project.Customer.CompanyPhone,
+        //        CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
+        //        CustomerType = project.Customer.CustomerType.ToString(),
+        //        CustomerRepresentative = project.Customer.CustomerRepresentative?.UserName ?? "Unknown",
+        //        Projects = project.Customer.Projects?.ToString()
+        //    }
+        //};
+        //    }
+        //    else
+        //    {
+        //        model.Customers = new List<CustomerListDto2>();
+        //    }
+
+        //    return model;
+        //}
 
 
         [HttpGet("dashboard")]

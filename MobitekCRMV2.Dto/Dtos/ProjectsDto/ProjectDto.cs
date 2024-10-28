@@ -1,11 +1,11 @@
-﻿using MobitekCRMV2.Dto.Dtos.ContentsBudgetDto;
+﻿using MobitekCRMV2.Dto.Dtos.BackLinskDto;
+using MobitekCRMV2.Dto.Dtos.ContentsBudgetDto;
 using MobitekCRMV2.Dto.Dtos.CustomersDto;
 using MobitekCRMV2.Dto.Dtos.DomainDto;
 using MobitekCRMV2.Dto.Dtos.KeywordsDto;
-using MobitekCRMV2.Dto.Dtos.PlatformDto;
+using MobitekCRMV2.Dto.Dtos.PlatformsDto;
 using MobitekCRMV2.Dto.Dtos.PromotionsDto;
 using MobitekCRMV2.Dto.Dtos.SmPlatformsDto;
-using MobitekCRMV2.Dto.Dtos.UserDto;
 using MobitekCRMV2.Dto.Dtos.UsersDto;
 using MobitekCRMV2.Entity.Enums;
 
@@ -21,6 +21,8 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
         public string ReportMail { get; set; }
         public string Phone { get; set; }
         public string Budget { get; set; }
+        public List<BackLinkDto> BackLinks { get; set; }
+        public List<PlatformDto> Platforms { get; set; }
         public int ContractKeywordCount { get; set; }
         public ContractType Contract { get; set; }
         public string StartDate { get; set; }
@@ -33,8 +35,14 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
         public string AccessInfo { get; set; }
         public string DevelopmentStatus { get; set; }
         public string PacketInfo { get; set; }
+        public List<string> CountryCodeList { get; set; }
+        public List<UserDto> Users { get; set; }
         public string ServerStatus { get; set; }
         public string ExportPosition { get; set; }
+        public string ReturnType { get; set; }
+        public string IsStarredFilter { get; set; }
+        public string CountryCodeFilter { get; set; }
+        public string ErrorMessage { get; set; }
 
         public string CustomerId { get; set; }
         public CustomerSummaryDto Customer { get; set; }
@@ -60,6 +68,7 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
         public int CompletedKeywordsCount { get; set; }
         public int TotalKeywordsCount { get; set; }
         public decimal CompletionRate { get; set; }
+        public List<CustomerDto> Customers { get; set; }
     }
 
     public class ProjectListDto
