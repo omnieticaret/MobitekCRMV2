@@ -265,7 +265,8 @@ namespace MobitekCRMV2.Controllers
                     Roles = roles.ToList(),
                     UserType = user.UserType,
                     Department = user.Department,
-                    Status = user.Status
+                    Status = user.Status,
+                    Photo = user.Email
                 };
 
                 userSummaries.Add(userSummary);

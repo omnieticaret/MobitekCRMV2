@@ -357,9 +357,14 @@ namespace MobitekCRMV2.Controllers
             if (project.ProjectType == ProjectType.Seo)
                 projectDto.DomainId = _context.Domains.FirstOrDefault(x => x.Project.Id == id)?.Id;
 
-            projectDto.Users = _mapper.Map<List<UserDto>>(_userManager.Users.ToList());
-            projectDto.Platforms = _mapper.Map<List<PlatformDto>>(await _platformRepository.Table.AsNoTracking().ToListAsync());
-            projectDto.Customers = _mapper.Map<List<CustomerDto>>(await _customerRepository.Table.AsNoTracking().ToListAsync());
+            projectDto.Users = _mapper.Map<List<UserDto>>(_userManager.Users.Where(u => u.Id == project.ExpertId).ToList());
+            projectDto.Customers = _mapper.Map<List<CustomerDto>>(await _customerRepository.Table.AsNoTracking().Where(c => c.Id == project.CustomerId).ToListAsync());
+            projectDto.Platforms = _mapper.Map<List<PlatformDto>>( await _platformRepository.Table.AsNoTracking().Where(p => p.Id == project.PlatformId).ToListAsync());
+
+
+            //projectDto.Users = _mapper.Map<List<UserDto>>(_userManager.Users.ToList());
+            //projectDto.Platforms = _mapper.Map<List<PlatformDto>>(await _platformRepository.Table.AsNoTracking().ToListAsync());
+            //projectDto.Customers = _mapper.Map<List<CustomerDto>>(await _customerRepository.Table.AsNoTracking().ToListAsync());
 
             if (countryCode == null)
             {
@@ -609,5 +614,7 @@ namespace MobitekCRMV2.Controllers
 
             return Ok(response);
         }
+
+  
     }
 }
