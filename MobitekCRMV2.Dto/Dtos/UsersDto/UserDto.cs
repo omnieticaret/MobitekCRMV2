@@ -40,6 +40,7 @@ namespace MobitekCRMV2.Dto.Dtos.UsersDto
         public string Department { get; set; }
         public Status Status { get; set; }
         public string Photo { get; set; }
+        public string thumbnail { get; set; }
     }
 
     public class UserCreateUpdateDto

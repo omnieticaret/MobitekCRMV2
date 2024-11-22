@@ -247,11 +247,9 @@ namespace MobitekCRMV2.Business.Services
         {
             var model = new KeywordHistoryModel();
 
-            // If start or end date is null, default to the last 30 days
             endDate ??= DateTime.Now;
             startDate ??= endDate.Value.AddDays(-30);
 
-            // Calculate the difference in days between start and end dates
             var daysDiff = (int)(endDate.Value.Date - startDate.Value.Date).TotalDays;
 
             for (var i = 0; i <= daysDiff; i++)

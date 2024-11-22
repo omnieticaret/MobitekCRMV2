@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Mobitek.CRM.Models.KeywordModels;
 using MobitekCRMV2.Authentication;
 using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Context;
@@ -21,6 +22,7 @@ using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Entity.Enums;
 using MobitekCRMV2.Extensions;
 using MobitekCRMV2.Jobs;
+using MobitekCRMV2.Model.Models;
 using Newtonsoft.Json;
 using System.Security.Claims;
 
@@ -322,7 +324,8 @@ namespace MobitekCRMV2.Controllers
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == userName);
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.UserName == userName);
+
             if (string.IsNullOrEmpty(starFilter) && string.IsNullOrEmpty(countryCode))
             {
                 HttpContext.Session.Remove("StarFilter");
@@ -330,43 +333,49 @@ namespace MobitekCRMV2.Controllers
             }
             else
             {
-                if (!string.IsNullOrEmpty(starFilter)) HttpContext.Session.SetString("StarFilter", starFilter);
-                else starFilter = HttpContext.Session.GetString("StarFilter");
-                if (!string.IsNullOrEmpty(countryCode)) HttpContext.Session.SetString("CountryCode", countryCode);
-                else countryCode = HttpContext.Session.GetString("CountryCode");
+                starFilter ??= HttpContext.Session.GetString("StarFilter");
+                countryCode ??= HttpContext.Session.GetString("CountryCode");
+                if (starFilter != null) HttpContext.Session.SetString("StarFilter", starFilter);
+                if (countryCode != null) HttpContext.Session.SetString("CountryCode", countryCode);
             }
-            var project = await _projectRepository.Table.AsNoTracking().IncludeAll().FirstOrDefaultAsync(x => x.Id == id);
-            if (id == null || project == null)
-            {
-                return NotFound(new { ErrorMessage = "Project not found" });
-            }
+
+            var project = await _projectRepository.Table.AsNoTracking()
+                .Include(x => x.Expert)
+                .Include(x => x.Customer)
+                .Include(x => x.Platform)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (project == null) return NotFound(new { ErrorMessage = "Project not found" });
 
             var projectDto = _mapper.Map<ProjectDto>(project);
             projectDto.ReturnType = returnType;
 
             if (type == "backlink")
             {
-                var backlinks = _backlinkRepository.Table.AsNoTracking()
-                                .Where(x => x.Domain.Project.Id == id)
-                                .OrderByDescending(x => x.CreatedAt)
-                                .Take(20)
-                                .ToList();
+                var backlinks = await _backlinkRepository.Table.AsNoTracking()
+                                    .Where(x => x.Domain.Project.Id == id)
+                                    .OrderByDescending(x => x.CreatedAt)
+                                    .Take(20)
+                                    .ToListAsync();
                 projectDto.BackLinks = _mapper.Map<List<BackLinkDto>>(backlinks);
             }
 
             if (project.ProjectType == ProjectType.Seo)
-                projectDto.DomainId = _context.Domains.FirstOrDefault(x => x.Project.Id == id)?.Id;
+                projectDto.DomainId = await _context.Domains
+                                                    .Where(x => x.Project.Id == id)
+                                                    .Select(x => x.Id)
+                                                    .FirstOrDefaultAsync();
 
-            projectDto.Users = _mapper.Map<List<UserDto>>(_userManager.Users.Where(u => u.Id == project.ExpertId).ToList());
-            projectDto.Customers = _mapper.Map<List<CustomerDto>>(await _customerRepository.Table.AsNoTracking().Where(c => c.Id == project.CustomerId).ToListAsync());
-            projectDto.Platforms = _mapper.Map<List<PlatformDto>>( await _platformRepository.Table.AsNoTracking().Where(p => p.Id == project.PlatformId).ToListAsync());
+            projectDto.Users = _mapper.Map<List<UserDto>>(
+                await _userManager.Users.Where(u => u.Id == project.ExpertId).ToListAsync());
 
+            projectDto.Customers = _mapper.Map<List<CustomerDto>>(
+                await _customerRepository.Table.AsNoTracking().Where(c => c.Id == project.CustomerId).ToListAsync());
 
-            //projectDto.Users = _mapper.Map<List<UserDto>>(_userManager.Users.ToList());
-            //projectDto.Platforms = _mapper.Map<List<PlatformDto>>(await _platformRepository.Table.AsNoTracking().ToListAsync());
-            //projectDto.Customers = _mapper.Map<List<CustomerDto>>(await _customerRepository.Table.AsNoTracking().ToListAsync());
+            projectDto.Platforms = _mapper.Map<List<PlatformDto>>(
+                await _platformRepository.Table.AsNoTracking().Where(p => p.Id == project.PlatformId).ToListAsync());
 
-            if (countryCode == null)
+            if (string.IsNullOrEmpty(countryCode))
             {
                 var codeList = _projectsService.StringToList(project.CountryCode);
                 countryCode = codeList.Count == 1 ? project.CountryCode : codeList[0];
@@ -374,30 +383,26 @@ namespace MobitekCRMV2.Controllers
             projectDto.CountryCodeFilter = countryCode;
 
             var keywords = await _keywordRepository.Table.AsNoTracking()
-                            .Where(x => x.ProjectId == id)
-                            .Include(x => x.KeywordValues.Where(kv => kv.CountryCode == countryCode))
-                            .ToListAsync();
+                                .Where(x => x.ProjectId == id)
+                                .Include(x => x.KeywordValues.Where(kv => kv.CountryCode == countryCode))
+                                .ToListAsync();
             projectDto.Keywords = _mapper.Map<List<KeywordSummaryDto>>(keywords);
 
             if (!string.IsNullOrEmpty(starFilter))
             {
-                projectDto.Keywords = starFilter == "star" ?
-                                    projectDto.Keywords.Where(x => x.IsStarred).ToList() :
-                                    projectDto.Keywords.Where(x => !x.IsStarred).ToList();
+                projectDto.Keywords = starFilter == "star"
+                                        ? projectDto.Keywords.Where(x => x.IsStarred).ToList()
+                                        : projectDto.Keywords.Where(x => !x.IsStarred).ToList();
                 projectDto.IsStarredFilter = starFilter;
             }
             projectDto.CountryCodeList = _projectsService.StringToList(project.CountryCode);
 
-            if (!(User.IsInRole("admin") || User.IsInRole("viewer")))
+            if (!(User.IsInRole("admin") || User.IsInRole("viewer")) &&
+                (!User.IsInRole("sm_expert") || project.ProjectType != ProjectType.Sm) &&
+                !(project.Expert?.UserName == User.Identity.Name) &&
+                !(User.IsInRole("customer") && project.Customer?.CustomerRepresentativeId == user.Id))
             {
-                if (!User.IsInRole("sm_expert") || project.ProjectType != ProjectType.Sm)
-                {
-                    if (!(project.Expert?.UserName == User.Identity.Name) &&
-                        !(User.IsInRole("customer") && project.Customer?.CustomerRepresentativeId == user.Id))
-                    {
-                        return Unauthorized(new { ErrorMessage = "You can only view your own projects' details" });
-                    }
-                }
+                return Unauthorized(new { ErrorMessage = "You can only view your own projects' details" });
             }
 
             return Ok(projectDto);
@@ -615,6 +620,155 @@ namespace MobitekCRMV2.Controllers
             return Ok(response);
         }
 
-  
+        [HttpGet("getLast30DaysAverage/{id}")]
+        public async Task<IActionResult> GetLast30DaysAverage(string id,string? isStarredFilter = null,string? selectedDate= null)
+        {
+            try
+            {
+                var countryCode = HttpContext.Session.GetString("CountryCode");
+                if (countryCode == null)
+                {
+                    var project = await _context.Projects.FirstOrDefaultAsync(x => x.Id == id);
+                    countryCode = project?.CountryCode ?? string.Empty;
+                    countryCode = _projectsService.StringToList(countryCode).FirstOrDefault();
+                }
+                var keywords = await _projectsService.GetKeywordsByProjectId(id, isStarredFilter);
+                var dateRange = _projectsService.GetDateTimeListFromPicker(selectedDate);
+                var result = new List<KeywordValue>();
+
+                if (dateRange != null)
+                {
+                    result = await _projectsService.GetKeywordValuesWithinDateRange(keywords, dateRange[0], dateRange[1], countryCode);
+                }
+                else
+                {
+                    result = await _projectsService.GetKeywordValuesWithinDateRange(keywords, null, null, countryCode);
+                }
+                var model = _projectsService.ConstructKeywordHistoryModel(result, countryCode, dateRange?[0], dateRange?[1]);
+                var modelDto = _mapper.Map<KeywordHistoryModel>(model);
+
+                return Ok(modelDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred while processing your request.", Error = ex.Message });
+            }
+        }
+
+        [HttpGet("getKeywordPositionHistory/{id}")]
+        public async Task<IActionResult> GetKeywordPositionHistory(string id, string? isStarredFilter = null, string? selectedDate = null)
+        {
+            try
+            {
+                var countryCode = HttpContext.Session.GetString("CountryCode");
+                if (countryCode == null)
+                {
+                    var project = await _context.Projects.FirstOrDefaultAsync(x => x.Id == id);
+                    countryCode = project?.CountryCode ?? string.Empty;
+                    countryCode = _projectsService.StringToList(countryCode).FirstOrDefault();
+                }
+
+                var keywords = await _projectsService.GetKeywordsByProjectId(id, isStarredFilter);
+               var dateRange = _projectsService.GetDateTimeListFromPicker(selectedDate);
+                var startDate = dateRange?[0] ?? DateTime.Now.AddDays(-30);
+                var endDate = dateRange?[1] ?? DateTime.Now;
+
+
+                var daysDiff = (int)(endDate.Date - startDate.Date).TotalDays;
+                var allDates = Enumerable.Range(0, daysDiff + 1)
+                    .Select(i => startDate.AddDays(i))
+                    .ToList();
+
+                var result = await _projectsService.GetKeywordValuesWithinDateRange(keywords, startDate, endDate, countryCode);
+
+                var groupedResults = result
+                    .Where(x => x.CountryCode == countryCode)
+                    .GroupBy(x => x.CreatedDate.Date)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                var historyList = new List<object>();
+                double lastKnownPosition = 0;
+
+                foreach (var date in allDates)
+                {
+                    var dailyResults = groupedResults.ContainsKey(date.Date) ? groupedResults[date.Date] : null;
+                    var averagePosition = dailyResults?.Average(x => x.Position) ?? lastKnownPosition;
+
+                    historyList.Add(new
+                    {
+                        Date = date.ToString("dd/MM/yyyy"),
+                        Positions = new
+                        {
+                            Poz1 = dailyResults?.Count(x => x.Position == 1) ?? 0,
+                            Poz2_3 = dailyResults?.Count(x => x.Position >= 2 && x.Position <= 3) ?? 0,
+                            Poz4_10 = dailyResults?.Count(x => x.Position >= 4 && x.Position <= 10) ?? 0,
+                            Poz11_30 = dailyResults?.Count(x => x.Position >= 11 && x.Position <= 30) ?? 0,
+                            Poz31_100 = dailyResults?.Count(x => x.Position >= 31 && x.Position <= 100) ?? 0,
+                            Poz100plus = dailyResults?.Count(x => x.Position > 100) ?? 0
+                        }
+                    });
+
+                    lastKnownPosition = averagePosition;
+                }
+
+                return Ok(new { history = historyList });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred while processing your request.", Error = ex.Message });
+            }
+        }
+
+
+
+
+
+        [HttpGet("exportAll")]
+        public async Task<IActionResult> ExportAllProjectKeywords()
+        {
+            try
+            {
+                var keywords = await _context.Keywords.AsNoTracking()
+              .Include(x => x.Project)
+              .Where(x => x.IsStarred
+                          && x.Project.ProjectType == ProjectType.Seo
+                          && x.Project.Status == Status.Active
+                          && x.Project.CountryCode.Contains("tr"))
+              .ToListAsync();
+
+                var exportList = new List<ExportKeywordItem>();
+
+                foreach (var item in keywords)
+                {
+
+                    var countryCodeList = _projectsService.StringToList(item.Project.CountryCode);
+                    var result = await _projectsService.GetLastKeywordValuesAverage(item, countryCodeList[0]);
+                    var range = _projectsService.SplitExportPosition(item.Project.ExportPosition);
+
+                    if (range.Count == 2 && result >= range[0] && result <= range[1])
+                    {
+                        exportList.Add(new ExportKeywordItem
+                        {
+                            Name = item.KeywordName,
+                            Url = item.TargetURL,
+                            AveragePosition = result,
+                            CountryCode = countryCodeList[0],
+                        });
+                    }
+                }
+
+                var content = _projectsService.AllProjectKeywordsExportExcel(exportList);
+
+                return File(content,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "AllKeywordList.xlsx");
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+          
+        }
     }
 }

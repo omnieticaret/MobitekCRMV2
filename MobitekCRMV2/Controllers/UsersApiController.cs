@@ -250,14 +250,30 @@ namespace MobitekCRMV2.Controllers
 
         [HttpGet("roleList")]
         public async Task<IActionResult> GetRoleList(string? userType = null)
-         {
-            var users = await _userRepository.Table.AsNoTracking().ToListAsync();
-            var userSummaries = new List<UserSummaryDto>();
+        {
+            IQueryable<User> query = _userRepository.Table.AsNoTracking();
 
+            if (!string.IsNullOrEmpty(userType))
+            {
+                var userTypeEnum = _adminService.GetEnumFromName(userType);
+                query = query.Where(u => u.UserType == userTypeEnum);
+            }
+            else
+            {
+                query = query.Where(u => u.UserType != UserType.Customer &&
+                                         u.UserType != UserType.Editor &&
+                                         u.UserType != UserType.Writer);
+            }
+
+            var users = await query
+                .OrderBy(u => u.Status)
+                .ToListAsync();
+
+            var userSummaries = new List<UserSummaryDto>();
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                var userSummary = new UserSummaryDto
+                userSummaries.Add(new UserSummaryDto
                 {
                     Id = user.Id.ToString(),
                     UserName = user.UserName,
@@ -266,36 +282,21 @@ namespace MobitekCRMV2.Controllers
                     UserType = user.UserType,
                     Department = user.Department,
                     Status = user.Status,
-                    Photo = user.Email
-                };
-
-                userSummaries.Add(userSummary);
+                    Photo = user.Email,
+                    thumbnail = "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+                });
             }
-            if (!string.IsNullOrEmpty(userType))
-            {
-                var userTypeEnum = _adminService.GetEnumFromName(userType);
-                userSummaries = userSummaries
-                    .Where(x => x.UserType == userTypeEnum)
-                    .ToList();
-            }
-            else
-            {
-                userSummaries = userSummaries
-                    .Where(x => x.UserType != UserType.Customer && x.UserType != UserType.Editor && x.UserType != UserType.Writer)
-                    .ToList();
-            }
-
-            userSummaries = userSummaries.OrderBy(x => x.Status).ToList();
-            var totalCount = userSummaries.Count;
 
             var result = new UserListDto
             {
                 Users = userSummaries,
-                TotalCount = totalCount
+                TotalCount = userSummaries.Count
             };
 
             return Ok(result);
         }
+
+
 
 
 

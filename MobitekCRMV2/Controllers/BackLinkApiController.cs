@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MobitekCRMV2.Business.Services;
@@ -11,8 +12,10 @@ using MobitekCRMV2.Model.Models;
 
 namespace MobitekCRMV2.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/backlink")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+
     public class BackLinkApiController : ControllerBase
     {
         private readonly IRepository<Domain> _domainRepository;
@@ -35,8 +38,8 @@ namespace MobitekCRMV2.Controllers
             _context = context;
             _backlinksService = backlinksService;
         }
-        [HttpGet("Index")]
-        public async Task<IActionResult> Index(string id, string type)
+        [HttpGet("index/{id}")]
+        public async Task<IActionResult> Index(string? id = null, string? type = null)
         {
             if (string.IsNullOrEmpty(id))
             {
