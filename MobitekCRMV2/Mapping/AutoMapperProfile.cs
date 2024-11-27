@@ -96,7 +96,7 @@ namespace MobitekCRMV2.Mapping
             // Keyword Mappings
             CreateMap<Keyword, KeywordDto>();
             CreateMap<KeywordDto, Keyword>();
-
+            CreateMap<KeywordDto, KeywordSummaryDto>();
             CreateMap<Keyword, KeywordSummaryDto>();
             CreateMap<KeywordSummaryDto, Keyword>();
 

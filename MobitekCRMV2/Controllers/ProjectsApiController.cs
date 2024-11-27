@@ -14,6 +14,7 @@ using MobitekCRMV2.DataAccess.UoW;
 using MobitekCRMV2.Dto.Dtos.BackLinskDto;
 using MobitekCRMV2.Dto.Dtos.CustomersDto;
 using MobitekCRMV2.Dto.Dtos.KeywordsDto;
+using MobitekCRMV2.Dto.Dtos.KeywordsValueDto;
 using MobitekCRMV2.Dto.Dtos.PlatformsDto;
 using MobitekCRMV2.Dto.Dtos.ProjectsDto;
 using MobitekCRMV2.Dto.Dtos.StatisticDto;
@@ -320,7 +321,12 @@ namespace MobitekCRMV2.Controllers
         }
 
         [HttpGet("detail/{id}")]
-        public async Task<ActionResult<ProjectDetailDto>> GetProjectDetail(string id, string? returnType = null, string? type = null, string? starFilter = null, string? countryCode = null)
+        public async Task<ActionResult<ProjectDetailDto>> GetProjectDetail(
+     string id,
+     string? returnType = null,
+     string? type = null,
+     string? starFilter = null,
+     string? countryCode = null)
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
@@ -350,15 +356,13 @@ namespace MobitekCRMV2.Controllers
             var projectDto = _mapper.Map<ProjectDto>(project);
             projectDto.ReturnType = returnType;
 
-            if (type == "backlink")
-            {
-                var backlinks = await _backlinkRepository.Table.AsNoTracking()
-                                    .Where(x => x.Domain.Project.Id == id)
-                                    .OrderByDescending(x => x.CreatedAt)
-                                    .Take(20)
-                                    .ToListAsync();
-                projectDto.BackLinks = _mapper.Map<List<BackLinkDto>>(backlinks);
-            }
+
+            //var backlinks = await _backlinkRepository.Table.AsNoTracking()
+            //                        .Where(x => x.Domain.Project.Id == id)
+            //                        .OrderByDescending(x => x.CreatedAt)
+            //                        .ToListAsync();
+            //projectDto.BackLinks = _mapper.Map<List<BackLinkDto>>(backlinks);
+
 
             if (project.ProjectType == ProjectType.Seo)
                 projectDto.DomainId = await _context.Domains
@@ -383,18 +387,35 @@ namespace MobitekCRMV2.Controllers
             projectDto.CountryCodeFilter = countryCode;
 
             var keywords = await _keywordRepository.Table.AsNoTracking()
-                                .Where(x => x.ProjectId == id)
-                                .Include(x => x.KeywordValues.Where(kv => kv.CountryCode == countryCode))
-                                .ToListAsync();
-            projectDto.Keywords = _mapper.Map<List<KeywordSummaryDto>>(keywords);
+                           .Where(x => x.ProjectId == id)
+                           .Include(x => x.KeywordValues.Where(kv => kv.CountryCode == countryCode))
+                           .ToListAsync();
+
+
+            var keywordDtos = _mapper.Map<List<KeywordDto>>(keywords);
+
 
             if (!string.IsNullOrEmpty(starFilter))
             {
-                projectDto.Keywords = starFilter == "star"
-                                        ? projectDto.Keywords.Where(x => x.IsStarred).ToList()
-                                        : projectDto.Keywords.Where(x => !x.IsStarred).ToList();
+                keywordDtos = starFilter == "star"
+                                ? keywordDtos.Where(x => x.IsStarred).ToList()
+                                : keywordDtos.Where(x => !x.IsStarred).ToList();
                 projectDto.IsStarredFilter = starFilter;
             }
+
+            var keywordSummaryDtos = _mapper.Map<List<KeywordSummaryDto>>(keywordDtos);
+
+            foreach (var keywordDto in keywordDtos)
+            {
+                var keywordValues = keywords.FirstOrDefault(k => k.Id == keywordDto.Id)?.KeywordValues;
+                if (keywordValues != null)
+                {
+                    keywordDto.KeywordValues = _mapper.Map<List<KeywordValueDto>>(keywordValues);
+                }
+            }
+
+            projectDto.Keywords = keywordSummaryDtos;
+
             projectDto.CountryCodeList = _projectsService.StringToList(project.CountryCode);
 
             if (!(User.IsInRole("admin") || User.IsInRole("viewer")) &&
@@ -407,163 +428,6 @@ namespace MobitekCRMV2.Controllers
 
             return Ok(projectDto);
         }
-
-
-        //[HttpGet("detail/{id}")]
-        //public async Task<ActionResult<ProjectDetailDto>> GetProjectDetail(string id, string? returnType = null, string? type = null, string? starFilter = null, string? countryCode = null)
-        //{
-        //    var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
-        //    var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
-        //    var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == userName);
-
-        //    var project = await _projectRepository.Table.AsNoTracking().IncludeAll().FirstOrDefaultAsync(x => x.Id == id);
-        //    if (project == null)
-        //    {
-        //        return NotFound("Project not found");
-        //    }
-
-        //    if (!(User.IsInRole("admin") || User.IsInRole("viewer")))
-        //    {
-        //        if (!User.IsInRole("sm_expert") || project.ProjectType != ProjectType.Sm)
-        //        {
-        //            if (!(project.Expert?.UserName == User.Identity?.Name) && !(User.IsInRole("customer") && project.Customer?.CustomerRepresentativeId == user.Id))
-        //            {
-        //                return Forbid("You can only view details of your own projects");
-        //            }
-        //        }
-        //    }
-
-        //    var model = new ProjectDetailDto();
-
-        //    if (type == "backlink")
-        //    {
-        //        model.BackLinks = await _backlinkRepository.Table
-        //            .AsNoTracking()
-        //            .Where(x => x.Domain.Project.Id == id)
-        //            .OrderByDescending(x => x.CreatedAt)
-        //            .Take(20)
-        //            .Select(bl => new BackLinkDto11
-        //            {
-        //                Id = bl.Id,
-        //                // Add other properties as needed
-        //            })
-        //            .ToListAsync();
-        //    }
-
-        //    if (project.ProjectType == ProjectType.Seo)
-        //    {
-        //        model.DomainId = (await _context.Domains.FirstOrDefaultAsync(x => x.Project.Id == id))?.Id;
-        //    }
-
-        //    model.Users = await _userManager.Users.Select(u => new UserListDto2
-        //    {
-        //        Id = u.Id,
-        //        UserName = u.UserName,
-        //        Email = u.Email
-        //    }).ToListAsync();
-
-        //    model.Platforms = await _platformRepository.Table.AsNoTracking().Select(p => new PlatformsListDto2
-        //    {
-        //        Id = p.Id,
-        //        Name = p.Name
-        //    }).ToListAsync();
-
-        //    model.Customers = await _customerRepository.Table.AsNoTracking().Select(c => new CustomerListDto2
-        //    {
-        //        Id = c.Id,
-        //        // Add other properties as needed
-        //    }).ToListAsync();
-
-        //    if (countryCode == null)
-        //    {
-        //        var codeList = _projectsService.StringToList(project.CountryCode);
-        //        countryCode = codeList.Count == 1 ? project.CountryCode : codeList[0];
-        //    }
-
-        //    model.CountryCodeFilter = countryCode;
-
-        //    var keywords = await _keywordRepository.Table.AsNoTracking()
-        //        .Where(x => x.ProjectId == id)
-        //        .Include(x => x.KeywordValues.Where(kv => kv.CountryCode == countryCode))
-        //        .ToListAsync();
-
-        //    if (starFilter != null)
-        //    {
-        //        keywords = starFilter switch
-        //        {
-        //            "star" => keywords.Where(x => x.IsStarred).ToList(),
-        //            "unstar" => keywords.Where(x => !x.IsStarred).ToList(),
-        //            _ => keywords
-        //        };
-        //        model.IsStarredFilter = starFilter;
-        //    }
-
-        //    model.CountryCodeList = _projectsService.StringToList(project.CountryCode);
-
-        //    model.Project = new ProjectListDto2
-        //    {
-        //        Id = project.Id,
-        //        ProjectType = project.ProjectType.ToString(),
-        //        ExpertId = project.ExpertId,
-        //        CustomerId = project.CustomerId,
-        //        ReportMail = project.ReportMail,
-        //        Phone = project.Phone,
-        //        Budget = project.Budget,
-        //        ContractKeywordCount = project.ContractKeywordCount,
-        //        Contract = project.Contract.ToString(),
-        //        StartDate = project.StartDate,
-        //        ReportDate = project.ReportDate,
-        //        MeetingDate = project.MeetingDate,
-        //        PacketInfo = project.PacketInfo,
-        //        DevelopmentStatus = project.DevelopmentStatus,
-        //        PlatformId = project.PlatformId,
-        //        ServerStatus = project.ServerStatus,
-        //        CountryCode = project.CountryCode,
-        //        AccessInfo = project.AccessInfo,
-        //        Note = project.Note,
-        //        Status = project.Status.ToString(),
-        //    };
-
-        //    model.Keywords = keywords.Select(k => new KeywordDto11
-        //    {
-        //        Id = k.Id,
-        //        Keyword = k.KeywordName,
-        //        IsStarred = k.IsStarred,
-        //        KeywordValues = k.KeywordValues.Select(kv => new KeywordValueDto11
-        //        {
-        //            Id = kv.Id,
-        //            CountryCode = kv.CountryCode,
-        //            Position = kv.Position,
-        //            Date = kv.CreatedDate.ToString("yyyy-MM-dd")
-        //        }).ToList()
-        //    }).ToList();
-
-        //    if (project.Customer != null)
-        //    {
-        //        model.Customers = new List<CustomerListDto2>
-        //{
-        //    new CustomerListDto2
-        //    {
-        //        Id = project.Customer.Id,
-        //        CompanyName = project.Customer.CompanyName,
-        //        CompanyAddress = project.Customer.CompanyAddress,
-        //        CompanyEmail = project.Customer.CompanyEmail,
-        //        CompanyPhone = project.Customer.CompanyPhone,
-        //        CompanyOfficialWebsite = project.Customer.CompanyOfficialWebsite,
-        //        CustomerType = project.Customer.CustomerType.ToString(),
-        //        CustomerRepresentative = project.Customer.CustomerRepresentative?.UserName ?? "Unknown",
-        //        Projects = project.Customer.Projects?.ToString()
-        //    }
-        //};
-        //    }
-        //    else
-        //    {
-        //        model.Customers = new List<CustomerListDto2>();
-        //    }
-
-        //    return model;
-        //}
-
 
         [HttpGet("dashboard")]
         public async Task<ActionResult<DashboardProjectsDto>> GetDashboardProjects()
@@ -621,7 +485,7 @@ namespace MobitekCRMV2.Controllers
         }
 
         [HttpGet("getLast30DaysAverage/{id}")]
-        public async Task<IActionResult> GetLast30DaysAverage(string id,string? isStarredFilter = null,string? selectedDate= null)
+        public async Task<IActionResult> GetLast30DaysAverage(string id, string? isStarredFilter = null, string? selectedDate = null)
         {
             try
             {
@@ -669,7 +533,7 @@ namespace MobitekCRMV2.Controllers
                 }
 
                 var keywords = await _projectsService.GetKeywordsByProjectId(id, isStarredFilter);
-               var dateRange = _projectsService.GetDateTimeListFromPicker(selectedDate);
+                var dateRange = _projectsService.GetDateTimeListFromPicker(selectedDate);
                 var startDate = dateRange?[0] ?? DateTime.Now.AddDays(-30);
                 var endDate = dateRange?[1] ?? DateTime.Now;
 
@@ -768,7 +632,7 @@ namespace MobitekCRMV2.Controllers
 
                 throw;
             }
-          
+
         }
     }
 }

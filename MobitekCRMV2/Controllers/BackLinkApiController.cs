@@ -6,6 +6,7 @@ using MobitekCRMV2.Business.Services;
 using MobitekCRMV2.DataAccess.Context;
 using MobitekCRMV2.DataAccess.Repository;
 using MobitekCRMV2.DataAccess.UoW;
+using MobitekCRMV2.Dto.Dtos.BackLinskDto;
 using MobitekCRMV2.Entity.Entities;
 using MobitekCRMV2.Extensions;
 using MobitekCRMV2.Model.Models;
@@ -156,10 +157,143 @@ namespace MobitekCRMV2.Controllers
 
             return new JsonResult(backlinkViewModelList);
         }
-        public class BacklinkRequestDTO
+
+        [HttpPost("addBacklinks")]
+        public async Task<IActionResult> AddLinks([FromBody] BackLinkCreateUpdateDto dto)
         {
-            public DateTime SelectedDate2 { get; set; }
-            public string DomainName { get; set; }
+            if (string.IsNullOrEmpty(dto.SelectDate))
+            {
+                return BadRequest(new { Error = "Link eklerken tarih seçmelisiniz!" });
+            }
+
+            var domain = await _domainRepository.GetByAsync(x => x.Id == dto.DomainId);
+            if (domain == null)
+            {
+                return NotFound(new { Error = "Domain bulunamadı!" });
+            }
+
+            var selectDate = "";
+            var year = dto.SelectDate.Split("-")[0];
+            var month = dto.SelectDate.Split("-")[1];
+            selectDate = $"{month}-{year}";
+
+            var backlinks = dto.UrlFrom.Select(url => new BackLink
+            {
+                UrlFrom = url,
+                Domain = domain,
+                SelectDate = selectDate
+            }).ToList();
+
+
+            foreach (var backlink in backlinks)
+            {
+                await _backLinkRepository.AddAsync(backlink);
+            }
+
+            await _unitOfWork.CommitAsync();
+
+            return Ok(new { Message = "Links başarıyla eklendi!" });
+        }
+
+        [HttpPost("checkStatus")]
+        public async Task<IActionResult> CheckStatus(string? id = null, string? returnUrl = null)
+        {
+            var backlink = await _backLinkRepository.Table
+                .Include(x => x.Domain)
+                .ThenInclude(x => x.Project)
+                .Where(y => y.Id == id)
+                .FirstOrDefaultAsync();
+
+            if (backlink == null)
+                return NotFound("Backlink not found");
+
+            var result = _customReader.CheckBackLink(backlink.UrlFrom, backlink.Domain.Name);
+            var domainId = backlink.DomainId;
+            var result2 = await result;
+
+            backlink.Status = result2.Status;
+            backlink.LandingPage = result2.LandingPage;
+            backlink.Anchor = result2.Anchor;
+            backlink.LastUpdateDate = DateTime.Now.Date;
+            _backLinkRepository.Update(backlink);
+            await _unitOfWork.CommitAsync();
+
+            _createTodos.TodosFromBacklinks(backlink, result2.Status);
+
+            if (!string.IsNullOrEmpty(returnUrl))
+                return Redirect(returnUrl);
+
+         
+      
+
+            return Ok(new { Message = "Status updated successfully" });
+        }
+
+        [HttpPost("deleteSelectedItem")]
+        public async Task<IActionResult> DeleteSelectedItems([FromBody] List<string> selectedIds)
+        {
+            if (selectedIds == null || selectedIds.Count == 0)
+            {
+                return BadRequest(new { message = "No items selected." });
+            }
+
+            var project = _context.Projects
+                .Include(x => x.Expert)
+                .Include(x => x.Domain).ThenInclude(x => x.BackLinks)
+                .FirstOrDefault(x => x.Domain.BackLinks.Any(b => b.Id == selectedIds.FirstOrDefault()));
+
+            if (project == null)
+            {
+                return NotFound(new { message = "Project not found." });
+            }
+
+            if (!User.IsInRole("admin"))
+            {
+                if (!(project.Expert?.UserName == User.Identity?.Name))
+                {
+                    return Forbid("You are only allowed to manage your own projects.");
+                }
+            }
+
+            var backlinkForRoute = _backLinkRepository.Table
+                .AsNoTracking()
+                .Include(x => x.Domain)
+                .FirstOrDefault(x => x.Id == selectedIds.First());
+
+            if (backlinkForRoute == null)
+            {
+                return NotFound(new { message = "Backlink not found." });
+            }
+
+            try
+            {
+                foreach (var id in selectedIds)
+                {
+                    var backlink = await _backLinkRepository.GetByAsync(x => x.Id == id);
+                    if (backlink != null)
+                    {
+                        _backLinkRepository.Remove(backlink);
+                    }
+                }
+                await _unitOfWork.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while deleting the items.", details = ex.Message });
+            }
+
+            return Ok(new { message = "Items deleted successfully.", domainId = backlinkForRoute.DomainId });
         }
     }
+}
+public class BackLinkCreateUpdateDto
+{
+    public List<string> UrlFrom { get; set; }
+    public string SelectDate { get; set; }
+    public string DomainId { get; set; }
+}
+public class BacklinkRequestDTO
+{
+    public DateTime SelectedDate2 { get; set; }
+    public string DomainName { get; set; }
 }
