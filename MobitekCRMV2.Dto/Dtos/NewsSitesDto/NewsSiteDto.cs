@@ -80,15 +80,26 @@ namespace MobitekCRMV2.Dto.Dtos.NewsSitesDto
 
     public class NewsSiteFilterDto
     {
-        public string Name { get; set; }
-        public int? MinPrice { get; set; }
-        public int? MaxPrice { get; set; }
+        public string? Name { get; set; }
+        public decimal? MinPrice { get; set; }
+        public decimal? MaxPrice { get; set; }
         public int? MinDAScore { get; set; }
         public int? MaxDAScore { get; set; }
         public int? MinPAScore { get; set; }
         public int? MaxPAScore { get; set; }
-        public string UserId { get; set; }
-        public string PromotionId { get; set; }
+        public int? MinDRScore { get; set; }
+        public int? MaxDRScore { get; set; }
+        public int? MinLinkedDomains { get; set; }
+        public int? MaxLinkedDomains { get; set; }
+        public int? MinBacklinks { get; set; }
+        public int? MaxBacklinks { get; set; }
+        public int? MinOrganicTraffic { get; set; }
+        public int? MaxOrganicTraffic { get; set; }
+        public int? MinAllTraffic { get; set; }
+        public int? MaxAllTraffic { get; set; }
+        public int? MinSpamScore { get; set; }
+        public int? MaxSpamScore { get; set; }
+        public bool NewRegistrations { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }

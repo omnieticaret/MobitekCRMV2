@@ -95,7 +95,7 @@ namespace MobitekCRMV2.Controllers
             {
                 return BadRequest("Müşteri Eklenemedi, bilgileri kontrol ediniz");
             }
-            
+
             var customer = new Customer
             {
                 CompanyName = model.CompanyName,
@@ -103,7 +103,7 @@ namespace MobitekCRMV2.Controllers
                 CompanyEmail = model.CompanyEmail,
                 CompanyPhone = model.CompanyPhone,
                 CompanyOfficialWebsite = model.CompanyOfficialWebsite,
-            CustomerType = Enum.Parse<CustomerType>(model.CustomerType)
+                CustomerType = Enum.Parse<CustomerType>(model.CustomerType)
 
             };
             await _customerRepository.AddAsync(customer);
@@ -162,5 +162,55 @@ namespace MobitekCRMV2.Controllers
                 CustomerRepresentatives = customerRepresentatives
             });
         }
+
+        [HttpGet("GetCustomerRepresentatives")]
+        public async Task<IActionResult> GetCustomerRepresentatives()
+        {
+            try
+            {
+                var customerRepresentatives = _userRepository.Table
+                    .Where(x => x.UserType == UserType.Customer)
+                    .Select(item => new
+                    {
+                        id = item.Id,
+                        userName = item.UserName
+                    })
+                    .ToList();
+
+                return Ok(customerRepresentatives);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while fetching customer representatives." });
+            }
+        }
+
+        [HttpGet("GetCustomerRepresentativesByCustomerId/{customerId}")]
+        public async Task<IActionResult> GetCustomerRepresentativesByCustomerId(string customerId)
+        {
+            try
+            {
+                var customer = await _customerRepository.Table
+                    .Include(x => x.CustomerRepresentative)
+                    .FirstOrDefaultAsync(x => x.Id == customerId);
+
+                if (customer == null || customer.CustomerRepresentativeId == null)
+                    return NotFound(new { message = "Customer or representative not found" });
+
+                var user = await _userRepository.Table
+                    .FirstOrDefaultAsync(x => x.Id == customer.CustomerRepresentativeId);
+
+                if (user == null)
+                    return NotFound(new { message = "Representative not found" });
+
+                return Ok(new { id = user.Id, userName = user.UserName });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred", details = ex.Message });
+            }
+        }
     }
+
 }
+

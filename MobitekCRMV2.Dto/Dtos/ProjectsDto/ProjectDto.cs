@@ -21,6 +21,7 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
         public string ReportMail { get; set; }
         public string Phone { get; set; }
         public string Budget { get; set; }
+        public int TotalKeywordValues { get; set; }
         public List<BackLinkDto> BackLinks { get; set; }
         public List<PlatformDto> Platforms { get; set; }
         public int ContractKeywordCount { get; set; }

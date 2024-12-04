@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Tokens;
 using MobitekCRMV2.Authentication;
 using MobitekCRMV2.DataAccess.Repository;
@@ -30,6 +31,17 @@ builder.Services.AddScoped<KeywordJsonModel>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true; // HTTPS üzerinden sıkıştırmayı etkinleştir
+    options.Providers.Add<BrotliCompressionProvider>(); // Brotli sıkıştırmayı ekle
+    options.Providers.Add<GzipCompressionProvider>();   // GZIP sıkıştırmayı ekle
+    options.MimeTypes = new[] { "application/json", "text/plain", "text/html" }; // Sıkıştırılacak MIME türleri
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(opts =>
+{
+    opts.Level = System.IO.Compression.CompressionLevel.Fastest; // Performans odaklı sıkıştırma
+});
 
 builder.Services.AddCors(options =>
 {
@@ -87,7 +99,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowLocalhost3000");
 
 app.UseRobotsTxt(app.Environment);
-
+app.UseResponseCompression();
 app.UseMiddleware<IPControlMiddleware>();
 
 app.UseHttpsRedirection(); 

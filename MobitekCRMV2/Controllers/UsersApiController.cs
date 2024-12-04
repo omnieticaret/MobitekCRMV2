@@ -63,7 +63,7 @@ namespace MobitekCRMV2.Controllers
             _roleManager = roleManager;
         }
         [HttpGet("index")]
-        public async Task<ActionResult<UsersResponseDto>> Index([FromQuery] UserType userType, [FromQuery] bool isAll, [FromQuery] string status)
+        public async Task<ActionResult<UsersResponseDto>> Index([FromQuery] UserType userType, [FromQuery] bool isAll,string? status = null)
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;

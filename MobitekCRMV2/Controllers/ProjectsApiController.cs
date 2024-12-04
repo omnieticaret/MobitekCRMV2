@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using DocumentFormat.OpenXml.Presentation;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +27,7 @@ using MobitekCRMV2.Jobs;
 using MobitekCRMV2.Model.Models;
 using Newtonsoft.Json;
 using System.Security.Claims;
+using System.Security.Policy;
 
 namespace MobitekCRMV2.Controllers
 {
@@ -321,12 +323,7 @@ namespace MobitekCRMV2.Controllers
         }
 
         [HttpGet("detail/{id}")]
-        public async Task<ActionResult<ProjectDetailDto>> GetProjectDetail(
-     string id,
-     string? returnType = null,
-     string? type = null,
-     string? starFilter = null,
-     string? countryCode = null)
+        public async Task<ActionResult<ProjectDetailDto>> GetProjectDetail(string id, string? returnType = null, string? type = null, string? starFilter = null, string? countryCode = null)
         {
             var userName = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
             var userRole = HttpContext.User.FindFirst(ClaimTypes.Role)?.Value;
@@ -583,10 +580,6 @@ namespace MobitekCRMV2.Controllers
             }
         }
 
-
-
-
-
         [HttpGet("exportAll")]
         public async Task<IActionResult> ExportAllProjectKeywords()
         {
@@ -634,5 +627,70 @@ namespace MobitekCRMV2.Controllers
             }
 
         }
+
+        [HttpGet("seoDasboardGetProject")]
+        public async Task<IActionResult> GetSeoProjects([FromQuery] Status status,[FromQuery] bool isAll)
+        {
+            IQueryable<Project> query = _projectRepository.Table.AsNoTracking()
+                .Where(p => p.ProjectType == ProjectType.Seo);
+
+            if (!isAll)
+            {
+                query = query.Where(p => p.Status == status);
+            }
+
+            var projects = await query
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Url,
+                    p.Name,
+                    p.ExpertId,
+                    ExpertName = p.Expert.UserName
+                })
+                .ToListAsync();
+
+            var projectIds = projects.Select(p => p.Id).ToList();
+
+            var keywordsWithValues = await _keywordRepository.Table.AsNoTracking()
+                .Where(k => projectIds.Contains(k.ProjectId))
+                .Select(k => new
+                {
+                    k.ProjectId,
+                    k.Id,        
+                    k.KeywordName,     
+                    KeywordValues = k.KeywordValues.Select(kv => new
+                    {
+                        kv.CreatedDate,
+                        kv.Position     
+                    }).ToList()
+                })
+                .ToListAsync();
+
+
+            var projectData = projects.Select(project =>
+            {
+                var keywords = keywordsWithValues.Where(k => k.ProjectId == project.Id).ToList();
+
+                return new
+                {
+                    project.Url,
+                    project.ExpertId,
+                    project.ExpertName,
+                    Keywords = keywords.Select(k => new
+                    {
+                        k.Id,
+                        k.KeywordValues 
+                    })
+                };
+            }).ToList();
+
+            return Ok(projectData);
+        }
+
     }
+
 }
+
+
+

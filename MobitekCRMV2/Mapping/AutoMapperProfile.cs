@@ -23,7 +23,6 @@ namespace MobitekCRMV2.Mapping
     {
         public AutoMapperProfile()
         {
-            // Project Mappings
             CreateMap<Project, ProjectDto>()
                 .ForMember(dest => dest.StartDate,
                     opt => opt.MapFrom(src => src.StartDate.ToString("dd/MM/yyyy")))
@@ -58,7 +57,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<ProjectCreateUpdateDto, Project>();
             CreateMap<Project, ProjectCreateUpdateDto>();
 
-            // User Mappings
             CreateMap<User, UserDto>();
             CreateMap<UserDto, User>();
 
@@ -71,7 +69,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<UserCreateUpdateDto, User>();
             CreateMap<User, UserCreateUpdateDto>();
 
-            // Customer Mappings
             CreateMap<Customer, CustomerDto>();
             CreateMap<CustomerDto, Customer>();
 
@@ -81,7 +78,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<CustomerCreateUpdateDto, Customer>();
             CreateMap<Customer, CustomerCreateUpdateDto>();
 
-            // Platform Mappings
             CreateMap<Platform, PlatformDto>()
                 .ForMember(dest => dest.ProjectCount,
                     opt => opt.MapFrom(src => src.Projects.Count));
@@ -93,7 +89,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<PlatformCreateUpdateDto, Platform>();
             CreateMap<Platform, PlatformCreateUpdateDto>();
 
-            // Keyword Mappings
             CreateMap<Keyword, KeywordDto>();
             CreateMap<KeywordDto, Keyword>();
             CreateMap<KeywordDto, KeywordSummaryDto>();
@@ -103,7 +98,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<KeywordCreateUpdateDto, Keyword>();
             CreateMap<Keyword, KeywordCreateUpdateDto>();
 
-            // Social Media Platform Mappings
             CreateMap<SmPlatform, SmPlatformDto>();
             CreateMap<SmPlatformDto, SmPlatform>();
 
@@ -113,7 +107,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<SmPlatformCreateUpdateDto, SmPlatform>();
             CreateMap<SmPlatform, SmPlatformCreateUpdateDto>();
 
-            // Promotion Mappings
             CreateMap<Promotion, PromotionDto>()
                 .ForMember(dest => dest.Date,
                     opt => opt.MapFrom(src => src.Date.ToString("dd/MM/yyyy")));
@@ -125,7 +118,7 @@ namespace MobitekCRMV2.Mapping
             CreateMap<PromotionCreateUpdateDto, Promotion>();
             CreateMap<Promotion, PromotionCreateUpdateDto>();
 
-            // Domain Mappings
+
             CreateMap<Domain, DomainDto>();
             CreateMap<DomainDto, Domain>();
 
@@ -137,7 +130,7 @@ namespace MobitekCRMV2.Mapping
             CreateMap<DomainCreateUpdateDto, Domain>();
             CreateMap<Domain, DomainCreateUpdateDto>();
 
-            // BackLink Mappings
+   
             CreateMap<BackLink, BackLinkDto>()
                 .ForMember(dest => dest.LastUpdateDate,
                     opt => opt.MapFrom(src => src.LastUpdateDate.ToString("dd/MM/yyyy")))
@@ -151,7 +144,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<BackLinkCreateUpdateDto, BackLink>();
             CreateMap<BackLink, BackLinkCreateUpdateDto>();
 
-            // KeywordInfo Mappings
             CreateMap<KeywordInfo, KeywordInfoDto>();
             CreateMap<KeywordInfoDto, KeywordInfo>();
 
@@ -161,7 +153,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<KeywordInfoCreateUpdateDto, KeywordInfo>();
             CreateMap<KeywordInfo, KeywordInfoCreateUpdateDto>();
 
-            // KeywordResponse Mappings
             CreateMap<KeywordResponse, KeywordResponseDto>()
                 .ForMember(dest => dest.Date,
                     opt => opt.MapFrom(src => src.Date.ToString("dd/MM/yyyy")));
@@ -173,7 +164,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<KeywordResponseCreateUpdateDto, KeywordResponse>();
             CreateMap<KeywordResponse, KeywordResponseCreateUpdateDto>();
 
-            // KeywordValue Mappings
             CreateMap<KeywordValue, KeywordValueDto>()
                 .ForMember(dest => dest.CreatedDate,
                     opt => opt.MapFrom(src => src.CreatedDate.ToString("dd/MM/yyyy")))
@@ -187,14 +177,11 @@ namespace MobitekCRMV2.Mapping
             CreateMap<KeywordValueCreateUpdateDto, KeywordValue>();
             CreateMap<KeywordValue, KeywordValueCreateUpdateDto>();
 
-            // LogMessage Mappings
             CreateMap<LogMessage, LogMessageDto>();
             CreateMap<LogMessageDto, LogMessage>();
 
             CreateMap<LogMessageCreateDto, LogMessage>();
             CreateMap<LogMessage, LogMessageCreateDto>();
-
-            // NewsSite Mappings
             CreateMap<NewsSite, NewsSiteDto>()
                 .ForMember(dest => dest.LastUpdateDate,
                     opt => opt.MapFrom(src => src.LastUpdateDate.ToString("dd/MM/yyyy")));
@@ -206,7 +193,6 @@ namespace MobitekCRMV2.Mapping
             CreateMap<NewsSiteCreateUpdateDto, NewsSite>();
             CreateMap<NewsSite, NewsSiteCreateUpdateDto>();
 
-            // UserInfo Mappings
             CreateMap<UserInfo, UserInfoDto>();
             CreateMap<UserInfoDto, UserInfo>();
 
@@ -216,9 +202,10 @@ namespace MobitekCRMV2.Mapping
             CreateMap<UserInfoCreateUpdateDto, UserInfo>();
             CreateMap<UserInfo, UserInfoCreateUpdateDto>();
 
-            // ContentBudget Mappings
             CreateMap<ContentBudget, ContentBudgetSummaryDto>();
             CreateMap<ContentBudgetSummaryDto, ContentBudget>();
+
+
         }
     }
 }
