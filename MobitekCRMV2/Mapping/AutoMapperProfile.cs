@@ -94,6 +94,9 @@ namespace MobitekCRMV2.Mapping
             CreateMap<KeywordDto, KeywordSummaryDto>();
             CreateMap<Keyword, KeywordSummaryDto>();
             CreateMap<KeywordSummaryDto, Keyword>();
+            CreateMap<KeywordDto, KeywordSummaryDto2>();
+            CreateMap<Keyword, KeywordSummaryDto2>();
+            CreateMap<KeywordSummaryDto2, Keyword>();
 
             CreateMap<KeywordCreateUpdateDto, Keyword>();
             CreateMap<Keyword, KeywordCreateUpdateDto>();
@@ -165,7 +168,7 @@ namespace MobitekCRMV2.Mapping
             CreateMap<KeywordResponse, KeywordResponseCreateUpdateDto>();
 
             CreateMap<KeywordValue, KeywordValueDto>()
-                .ForMember(dest => dest.CreatedDate,
+                .ForMember(dest => dest.CreatedAt,
                     opt => opt.MapFrom(src => src.CreatedDate.ToString("dd/MM/yyyy")))
                 .ForMember(dest => dest.UpdatedDate,
                     opt => opt.MapFrom(src => src.UpdatedDate.ToString("dd/MM/yyyy")));
@@ -174,6 +177,7 @@ namespace MobitekCRMV2.Mapping
             CreateMap<KeywordValue, KeywordValueSummaryDto>();
             CreateMap<KeywordValueSummaryDto, KeywordValue>();
 
+            CreateMap<KeywordDto, KeywordSummaryDto3>();
             CreateMap<KeywordValueCreateUpdateDto, KeywordValue>();
             CreateMap<KeywordValue, KeywordValueCreateUpdateDto>();
 

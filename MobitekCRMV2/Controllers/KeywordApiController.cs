@@ -27,8 +27,8 @@ namespace MobitekCRMV2.Controllers
         private readonly CRMDbContext _context;
         private readonly ProjectsService _projectsService;
         private readonly KeywordsService _keywordsService;
-
-        public KeywordApiController(IRepository<Keyword> keywordRepository, IRepository<Project> projectRepository, IRepository<Promotion> promotionRepository, IUnitOfWork unitOfWork, IRepository<KeywordValue> keywordValuesRepository, SpaceSerpJob spaceSerpJob, CRMDbContext context, ProjectsService projectsService, KeywordsService keywordsService)
+        private readonly IRepository<KeywordValue> _keywordvaluesRepository;
+        public KeywordApiController(IRepository<Keyword> keywordRepository, IRepository<Project> projectRepository, IRepository<Promotion> promotionRepository, IUnitOfWork unitOfWork, IRepository<KeywordValue> keywordValuesRepository, SpaceSerpJob spaceSerpJob, CRMDbContext context, ProjectsService projectsService, KeywordsService keywordsService, IRepository<KeywordValue> keywordvaluesRepository)
         {
             _keywordRepository = keywordRepository;
             _projectRepository = projectRepository;
@@ -39,6 +39,7 @@ namespace MobitekCRMV2.Controllers
             _context = context;
             _projectsService = projectsService;
             _keywordsService = keywordsService;
+            _keywordvaluesRepository = keywordvaluesRepository;
         }
         [HttpPost("toggleStar/{keywordId}")]
         public async Task<IActionResult> ToggleStar(string keywordId)
@@ -147,7 +148,7 @@ namespace MobitekCRMV2.Controllers
                     _keywordValuesRepository.RemoveRange(keyword.KeywordValues);
                 }
 
-              
+
 
                 _keywordRepository.Remove(keyword);
             }
@@ -156,6 +157,84 @@ namespace MobitekCRMV2.Controllers
 
             return Ok("Selected keywords have been successfully deleted.");
         }
+
+        [HttpPost("keywordValues")]
+        public async Task<IActionResult> GetKeywordValues([FromBody] List<string> keywordIds)
+        {
+            if (keywordIds == null || !keywordIds.Any())
+            {
+                return BadRequest(new { ErrorMessage = "Keyword IDs cannot be null or empty." });
+            }
+
+            var results = new List<object>();
+
+            foreach (var keywordId in keywordIds)
+            {
+                var keywordEntity = await _keywordRepository.Table
+                    .AsNoTracking()
+                    .Include(x => x.Project)
+                    .FirstOrDefaultAsync(x => x.Id == keywordId);
+
+                if (keywordEntity == null)
+                {
+                    results.Add(new { KeywordId = keywordId, ErrorMessage = "Keyword not found" });
+                    continue;
+                }
+
+                var keywordName = keywordEntity.KeywordName;
+                var domainUrl = keywordEntity.Project.Url;
+
+                var countryCodeList = _projectsService.StringToList(keywordEntity.Project.CountryCode);
+
+                foreach (var countryCode in countryCodeList)
+                {
+                    var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.Local);
+
+                    var lastKeywordValue = await _keywordvaluesRepository.Table
+                        .Where(x => x.KeywordId == keywordEntity.Id && x.CreatedDate.Date == today && x.CountryCode == countryCode)
+                        .FirstOrDefaultAsync();
+
+                    if (lastKeywordValue == null)
+                    {
+                        var result = await _spaceSerpJob.GetKeywordValuesAsync(keywordName, domainUrl, countryCode);
+                        var values = new KeywordValue
+                        {
+                            Position = result.position,
+                            Domain = domainUrl,
+                            Link = result.link,
+                            KeywordId = keywordEntity.Id,
+                            CreatedDate = DateTime.UtcNow,
+                            CountryCode = countryCode
+                        };
+
+                        await _keywordvaluesRepository.AddAsync(values);
+                        await _unitOfWork.CommitAsync();
+                    }
+                    else
+                    {
+                        if (lastKeywordValue.UpdatedDate.ToString("dd/MM/yyyy") != DateTime.UtcNow.ToString("dd/MM/yyyy"))
+                        {
+                            var result = await _spaceSerpJob.GetKeywordValuesAsync(keywordName, domainUrl, countryCode);
+                            lastKeywordValue.Position = result.position;
+                            lastKeywordValue.Domain = domainUrl;
+                            lastKeywordValue.Link = result.link?.Split(domainUrl)[1];
+                            lastKeywordValue.UpdatedDate = DateTime.UtcNow;
+                            lastKeywordValue.CountryCode = countryCode;
+
+                            _keywordvaluesRepository.Update(lastKeywordValue);
+                            await _unitOfWork.CommitAsync();
+                        }
+                    }
+                }
+
+                results.Add(new { KeywordId = keywordId, Message = "Keyword values updated successfully." });
+            }
+
+
+            return Ok(results);
+        }
+
+
     }
 
 }

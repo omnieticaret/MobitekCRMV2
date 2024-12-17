@@ -13,13 +13,13 @@ namespace MobitekCRMV2.Dto.Dtos.KeywordsValueDto
         public string Title { get; set; }
         public string Description { get; set; }
         public string CountryCode { get; set; }
-        public string CreatedDate { get; set; }
+        public string CreatedAt { get; set; }
         public string UpdatedDate { get; set; }
         public TargetCheckType TargetCheckType { get; set; }
         public string KeywordId { get; set; }
         public KeywordSummaryDto Keyword { get; set; }
     }
-
+ 
     public class KeywordValueListDto
     {
         public List<KeywordValueSummaryDto> KeywordValues { get; set; }

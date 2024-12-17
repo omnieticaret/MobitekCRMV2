@@ -105,9 +105,9 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
         public string Budget { get; set; }
         public int ContractKeywordCount { get; set; }
         public ContractType Contract { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime ReportDate { get; set; }
-        public DateTime MeetingDate { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? ReportDate { get; set; }
+        public DateTime? MeetingDate { get; set; }
         public Status Status { get; set; }
         public string Note { get; set; }
         public string CountryCode { get; set; }
@@ -121,6 +121,7 @@ namespace MobitekCRMV2.Dto.Dtos.ProjectsDto
         public string CustomerTypeUserId { get; set; }
         public string PlatformId { get; set; }
         public string DomainId { get; set; }
+        public List<string> CountryCodeList { get; set; }
     }
 
     public class ProjectFilterDto

@@ -3,10 +3,11 @@ using MobitekCRMV2.Dto.Dtos.KeywordsResponseDto;
 using MobitekCRMV2.Dto.Dtos.KeywordsValueDto;
 using MobitekCRMV2.Dto.Dtos.ProjectsDto;
 using MobitekCRMV2.Dto.Dtos.PromotionsDto;
+using MobitekCRMV2.Entity.Enums;
 
 namespace MobitekCRMV2.Dto.Dtos.KeywordsDto
 {
-   public class KeywordDto
+    public class KeywordDto
     {
         public string Id { get; set; }
         public string KeywordName { get; set; }
@@ -37,6 +38,7 @@ namespace MobitekCRMV2.Dto.Dtos.KeywordsDto
         public string TargetURL { get; set; }
         public string TargetStatus { get; set; }
         public bool IsStarred { get; set; }
+        //  public List<KeywordValueDto> KeywordValues { get; set; }
     }
 
     public class KeywordCreateUpdateDto
@@ -50,4 +52,19 @@ namespace MobitekCRMV2.Dto.Dtos.KeywordsDto
         public string H1 { get; set; }
         public string ProjectId { get; set; }
     }
+    public class KeywordSummaryDto2
+    {
+        public string Id { get; set; }
+        public string KeywordName { get; set; }
+        public string TargetURL { get; set; }
+        public string TargetStatus { get; set; }
+        public bool IsStarred { get; set; }
+        public List<KeywordValueDto> KeywordValues { get; set; }
+    }
+    public class KeywordSummaryDto3
+    {
+        public string Id { get; set; }
+        public List<KeywordValueDto> KeywordValues { get; set; }
+    }
+
 }
