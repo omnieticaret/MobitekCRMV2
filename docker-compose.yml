@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  mobitekcrmbackend:
+    image: mobitekcrmbackend
+    container_name: mobitekcrmbackend
+    restart: always
+    build:
+      context: .
+      dockerfile: MobitekCRMV2/Dockerfile
+    labels:
+      - traefik.backend=mobitekcrmfrontend
+      - traefik.frontend.rule=Host:mobitekcrmbackend.mobitek.org
+      - traefik.docker.network=omni
+      - traefik.port=8080
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - omni
+
+networks:
+  omni:
+    external: true
