@@ -26,8 +26,17 @@ namespace MobitekCRMV2.Middlewares
             var ipList = allowedIPs.Split(';');
             var url = context.Request.Path;
 
-            if (url.StartsWithSegments("/swagger") || 
-                url.StartsWithSegments("/users/login") || 
+            // Public endpoint'leri bypass et
+            var publicEndpoints = new[] 
+            { 
+                "/",                // Root endpoint
+                "/swagger",
+                "/users/login",
+                "/users/register",
+                "/health"
+            };
+
+            if (publicEndpoints.Any(endpoint => url.StartsWithSegments(endpoint)) || 
                 url.Value.Contains("/swagger/") ||
                 url.Value.Contains("swagger.json"))
             {
