@@ -50,7 +50,7 @@ namespace MobitekCRMV2.Controllers
             {
                 var newsSites = await _newsSiteRepository.Table
                     .AsNoTracking()
-                    .Where(x => x.OrganicTraffic >= 1000 || x.OrganicTraffic == 0)
+                   // .Where(x => x.OrganicTraffic >= 1000 || x.OrganicTraffic == 0)
                     .Include(x => x.User)
                     .ToListAsync();
 
