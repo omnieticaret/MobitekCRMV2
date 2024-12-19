@@ -21,17 +21,26 @@ namespace MobitekCRMV2.Middlewares
 
         public async Task Invoke(HttpContext context)
         {
-            var ipAddress = _accessor.GetIpAddress();
-            var allowedIPs = _configuration.GetSection("AllowedIPAddresses")?.Value;
-            var ipList = allowedIPs.Split(';');
+            // CORS Preflight isteklerini bypass et
+            if (context.Request.Method == "OPTIONS")
+            {
+                context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Headers", "*");
+                context.Response.Headers.Add("Access-Control-Allow-Methods", "*");
+                await _next.Invoke(context);
+                return;
+            }
+
             var url = context.Request.Path;
 
             // Public endpoint'leri bypass et
             var publicEndpoints = new[] 
             { 
-                "/",                // Root endpoint
+                "/",                
                 "/swagger",
-                "/users/login",
+                "/api/users/login",    
+                "/users/login",        
+                "/api/users/register",
                 "/users/register",
                 "/health"
             };
@@ -44,12 +53,18 @@ namespace MobitekCRMV2.Middlewares
                 return;
             }
 
+            // IP kontrolü
+            var ipAddress = _accessor.GetIpAddress();
+            var allowedIPs = _configuration.GetSection("AllowedIPAddresses")?.Value;
+            var ipList = allowedIPs?.Split(';') ?? Array.Empty<string>();
+
             if (!ipList.Contains(ipAddress))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 await context.Response.WriteAsync("Bu IP'nin erişim yetkisi yoktur. Current IP = " + ipAddress);
                 return;
             }
+
             if (!url.Value.Contains("/users"))
             {
                 using (var scope = _serviceScopeFactory.CreateScope())

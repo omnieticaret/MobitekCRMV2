@@ -45,12 +45,18 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(opts =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost3000", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+        policy
+            .WithOrigins(
+                "https://mobitekcrmfrontend.mobitek.org",
+                "http://mobitekcrmfrontend.mobitek.org",
+                "http://localhost:3000",
+                "https://localhost:3000"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 builder.Services.AddDistributedMemoryCache();
@@ -125,15 +131,13 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-app.UseCors("AllowLocalhost3000");
-
-app.UseRobotsTxt(app.Environment);
-app.UseResponseCompression();
-app.UseMiddleware<IPControlMiddleware>();
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<IPControlMiddleware>();
 app.UseSession();
 app.MapControllers();
 
