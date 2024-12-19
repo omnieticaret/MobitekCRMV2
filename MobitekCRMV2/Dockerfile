@@ -3,6 +3,9 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 WORKDIR /app
+EXPOSE 8080
+
+
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
@@ -16,12 +19,11 @@ COPY ["MobitekCRMV2.Dto/MobitekCRMV2.Dto.csproj", "MobitekCRMV2.Dto/"]
 RUN dotnet restore "./MobitekCRMV2/MobitekCRMV2.csproj"
 COPY . .
 WORKDIR "/src/MobitekCRMV2"
-RUN dotnet build "./MobitekCRMV2.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./MobitekCRMV2.csproj" -c Release -o /app/build
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
 EXPOSE 8080
-RUN dotnet publish "./MobitekCRMV2.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./MobitekCRMV2.csproj" -c Release  -o /app/publish
 
 FROM base AS final
 WORKDIR /app
