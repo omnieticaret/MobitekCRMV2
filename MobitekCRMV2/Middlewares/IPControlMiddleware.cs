@@ -49,14 +49,14 @@ namespace MobitekCRMV2.Middlewares
                         else
                         {
                             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                            await context.Response.WriteAsync("Geçersiz token.");
+                            await context.Response.WriteAsync("Geçersiz token1.");
                             return;
                         }
                     }
                     else
                     {
                         context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                        await context.Response.WriteAsync("Token eksik.");
+                        await context.Response.WriteAsync("Token eksik2.");
                         return;
                     }
                 }
