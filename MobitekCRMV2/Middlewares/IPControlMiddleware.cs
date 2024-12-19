@@ -26,6 +26,15 @@ namespace MobitekCRMV2.Middlewares
             var ipList = allowedIPs.Split(';');
             var url = context.Request.Path;
 
+            if (url.StartsWithSegments("/swagger") || 
+                url.StartsWithSegments("/users/login") || 
+                url.Value.Contains("/swagger/") ||
+                url.Value.Contains("swagger.json"))
+            {
+                await _next.Invoke(context);
+                return;
+            }
+
             if (!ipList.Contains(ipAddress))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
