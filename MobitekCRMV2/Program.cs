@@ -102,10 +102,10 @@ app.UseRobotsTxt(app.Environment);
 app.UseResponseCompression();
 app.UseMiddleware<IPControlMiddleware>();
 
-app.UseHttpsRedirection(); 
-app.UseSession();
-app.UseAuthorization();
+app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseAuthorization();
+app.UseSession();
 app.MapControllers();
 
 app.Run();
