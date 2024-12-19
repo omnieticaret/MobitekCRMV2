@@ -22,14 +22,18 @@ namespace MobitekCRMV2.Middlewares
         public async Task Invoke(HttpContext context)
         {
             var ipAddress = _accessor.HttpContext.Connection.RemoteIpAddress?.ToString();
-            var allowedIPs = _configuration.GetSection("AllowedIPAddresses")?.Value;
-            var ipList = allowedIPs.Split(';');
+            //var allowedIPs = _configuration.GetSection("AllowedIPAddresses")?.Value;
+           // var ipList = allowedIPs.Split(';');
             var url = context.Request.Path;
+            var ips = _configuration.GetSection("AllowedIPAddresses")?.Value;
+            var IP = _accessor.GetIpAddress();
+            var ipList = ips.Split(';');
 
-            if (!ipList.Contains(ipAddress))
+
+            if (!ipList.Contains(IP))
             {
                 context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                await context.Response.WriteAsync("Bu IP'nin erişim yetkisi yoktur. Current IP = " + ipAddress);
+                await context.Response.WriteAsync("Bu IP'nin erişim yetkisi yoktur. Current ip = " + IP);
                 return;
             }
             if (!url.Value.Contains("/users"))
